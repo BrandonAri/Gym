@@ -1,0 +1,8 @@
+{
+  "name": "IronLog PWA",
+  "description": "A comprehensive gym tracker PWA with workout scheduling, history, and media attachments.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
