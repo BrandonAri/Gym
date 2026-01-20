@@ -1,11 +1,21 @@
 export const generateId = (): string => Math.random().toString(36).substr(2, 9);
 
 export const formatDate = (date: Date): string => {
-  return date.toISOString().split('T')[0];
+  // IMPORTANT: Use LOCAL date parts (not toISOString) to avoid UTC day-rollover bugs.
+  // Example bug: late-night on Jan 19 local can become Jan 20 in UTC.
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
+export const parseLocalDate = (dateStr: string): Date => {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, (m || 1) - 1, d || 1);
 };
 
 export const getDisplayDate = (dateStr: string): string => {
-  const date = new Date(dateStr);
+  const date = parseLocalDate(dateStr);
   return new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'short', day: 'numeric' }).format(date);
 };
 

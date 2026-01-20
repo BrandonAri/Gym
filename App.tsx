@@ -7,7 +7,7 @@ import {
   Play, Pause, RotateCcw, BarChart3, Clock, ChevronLeft, MoreHorizontal, Loader2
 } from 'lucide-react';
 import { Button, Modal, Input, useLongPress, MediaResolver, useSwipe, SwipeableItem } from './components/ui';
-import { generateId, formatDate, getDisplayDate, processAndSaveMedia, getDayNumber, getMonthName, formatDuration, getMediaFromDB } from './services/utils';
+import { generateId, formatDate, getDisplayDate, parseLocalDate, processAndSaveMedia, getDayNumber, getMonthName, formatDuration, getMediaFromDB } from './services/utils';
 import { ExerciseDef, ExerciseInstance, UserProfile, Workout, Set } from './types';
 import { supabase, uploadMediaToSupabase } from './services/supabase';
 
@@ -273,7 +273,7 @@ const LoginView: React.FC = () => {
   }
 
   return (
-    <div className="h-screen flex flex-col justify-between bg-white px-8 py-12 animate-in fade-in duration-700">
+    <div className="h-screen flex flex-col justify-between bg-white px-8 py-12 animate__animated animate__fadeIn" style={{ ['--animate-duration' as any]: '400ms' }}>
       <div className="mt-20">
          <h1 className="text-5xl font-black text-center leading-tight tracking-tight text-gray-900">
             Start tracking<br/>your first<br/>workout...
@@ -412,7 +412,7 @@ const Dashboard: React.FC = () => {
   if (isLoading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin text-gray-300"/></div>;
 
   return (
-    <div className="px-6 pt-8 pb-32 min-h-screen bg-white">
+    <div className="px-6 pt-8 pb-32 min-h-screen bg-white animate__animated animate__fadeIn" style={{ ['--animate-duration' as any]: '250ms' }}>
       <header className="flex justify-between items-center mb-8">
         <h1 className="text-4xl font-black text-gray-900 tracking-tight">Workout</h1>
         <button className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 active:bg-gray-200">
@@ -554,8 +554,8 @@ const HistoryView = () => {
     }) => {
         if (!isOpen) return null;
         return (
-            <div className="fixed inset-0 z-[100] flex flex-col justify-end bg-gradient-to-t from-black/40 via-black/25 to-black/10 backdrop-blur-sm animate-in fade-in duration-500">
-                <div className="bg-white rounded-t-[32px] p-6 pb-[calc(6rem+env(safe-area-inset-bottom))] max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom duration-500 ease-out">
+            <div className="fixed inset-0 z-[100] flex flex-col justify-end bg-gradient-to-t from-black/40 via-black/25 to-black/10 backdrop-blur-sm animate__animated animate__fadeIn" style={{ ['--animate-duration' as any]: '450ms' }}>
+                <div className="bg-white rounded-t-[32px] p-6 pb-[calc(8rem+env(safe-area-inset-bottom))] max-h-[92vh] overflow-y-auto animate__animated animate__fadeInUp" style={{ ['--animate-duration' as any]: '450ms' }}>
                     <div className="w-12 h-1 bg-gray-200 rounded-full mx-auto mb-6"></div>
                     <h3 className="font-bold text-xl text-gray-900 mb-6 text-center">Workout Options</h3>
                     <div className="space-y-3">
@@ -596,7 +596,7 @@ const HistoryView = () => {
 
 
     return (
-        <div className="px-6 pt-8 pb-32 bg-white min-h-screen">
+        <div className="px-6 pt-8 pb-32 bg-white min-h-screen animate__animated animate__fadeIn" style={{ ['--animate-duration' as any]: '250ms' }}>
             <header className="flex justify-between items-center mb-8">
                 <h1 className="text-4xl font-black text-gray-900 tracking-tight">History</h1>
                 <button onClick={() => setIsFilterModalOpen(true)} className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${filterType !== 'all' ? 'bg-cyan-400 text-white' : 'bg-gray-100 text-gray-600'}`}>
@@ -711,8 +711,8 @@ const CalendarView = () => {
    const ActionMenu: React.FC<{ isOpen: boolean, onClose: () => void, onCopy: () => void, onDelete: () => void }> = ({ isOpen, onClose, onCopy, onDelete }) => {
         if (!isOpen) return null;
         return (
-            <div className="fixed inset-0 z-[100] flex flex-col justify-end bg-gradient-to-t from-black/40 via-black/25 to-black/10 backdrop-blur-sm animate-in fade-in duration-500">
-                <div className="bg-white rounded-t-[32px] p-6 pb-[calc(6rem+env(safe-area-inset-bottom))] max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom duration-500 ease-out">
+            <div className="fixed inset-0 z-[100] flex flex-col justify-end bg-gradient-to-t from-black/40 via-black/25 to-black/10 backdrop-blur-sm animate__animated animate__fadeIn" style={{ ['--animate-duration' as any]: '450ms' }}>
+                <div className="bg-white rounded-t-[32px] p-6 pb-[calc(8rem+env(safe-area-inset-bottom))] max-h-[92vh] overflow-y-auto animate__animated animate__fadeInUp" style={{ ['--animate-duration' as any]: '450ms' }}>
                     <div className="w-12 h-1 bg-gray-200 rounded-full mx-auto mb-6"></div>
                     <h3 className="font-bold text-xl text-gray-900 mb-6 text-center">Workout Options</h3>
                     <div className="space-y-3">
@@ -743,7 +743,7 @@ const CalendarView = () => {
 
 
    return (
-      <div className="px-6 pt-8 pb-32 bg-white min-h-screen">
+      <div className="px-6 pt-8 pb-32 bg-white min-h-screen animate__animated animate__fadeIn" style={{ ['--animate-duration' as any]: '250ms' }}>
          <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-8">Calendar</h1>
          <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold text-gray-900">{currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</h2>
@@ -758,7 +758,7 @@ const CalendarView = () => {
             {Array.from({ length: daysInMonth }).map((_, i) => {
                 const day = i + 1;
                 const dayWorkouts = getWorkoutsForDay(day);
-                const isSelected = selectedDayWorkouts.length > 0 && getDayNumber(selectedDayWorkouts[0].date) === day && new Date(selectedDayWorkouts[0].date).getMonth() === month;
+                const isSelected = selectedDayWorkouts.length > 0 && getDayNumber(selectedDayWorkouts[0].date) === day && parseLocalDate(selectedDayWorkouts[0].date).getMonth() === month;
                 const isToday = day === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear();
                 return (
                     <div key={day} onClick={() => handleDayClick(day)} className={`aspect-square rounded-2xl flex flex-col items-center justify-center relative cursor-pointer transition-all active:scale-95 ${isSelected ? 'bg-cyan-400 text-white shadow-lg shadow-cyan-200' : isToday ? 'bg-gray-100 text-gray-900 font-bold' : 'bg-transparent text-gray-700 hover:bg-gray-50'}`}>
@@ -787,7 +787,7 @@ const CalendarView = () => {
 const ProfileView = () => {
     const { user, logout, toggleUnit } = useContext(GymContext);
     return (
-        <div className="px-6 pt-8 pb-32 bg-white min-h-screen">
+        <div className="px-6 pt-8 pb-32 bg-white min-h-screen animate__animated animate__fadeIn" style={{ ['--animate-duration' as any]: '250ms' }}>
             <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-8">Me</h1>
             <div className="flex flex-col items-center mb-10">
                 <div className="p-1 rounded-full border-2 border-cyan-400 mb-4"><img src={user?.photoUrl} alt="Profile" className="w-24 h-24 rounded-full border-4 border-white" /></div>
@@ -799,6 +799,57 @@ const ProfileView = () => {
         </div>
     );
 }
+
+// A small controlled input that allows temporary empty text, so users can
+// erase the default 0 and type naturally on mobile keyboards.
+const SetNumberInput: React.FC<{
+  value: number;
+  onValueChange: (v: number) => void;
+  inputMode?: 'numeric' | 'decimal';
+  className?: string;
+}> = ({ value, onValueChange, inputMode = 'decimal', className = '' }) => {
+  const [text, setText] = useState<string>(String(value));
+  const focused = useRef(false);
+
+  useEffect(() => {
+    if (!focused.current) setText(String(value));
+  }, [value]);
+
+  const commit = () => {
+    const t = text.trim();
+    const n = t === '' ? 0 : Number(t);
+    const v = Number.isFinite(n) ? n : 0;
+    setText(String(v));
+    onValueChange(v);
+  };
+
+  return (
+    <input
+      type="text"
+      inputMode={inputMode}
+      value={text}
+      onFocus={(e) => {
+        focused.current = true;
+        // If it's the default 0, clear it so typing starts clean.
+        if (text === '0') setText('');
+        requestAnimationFrame(() => e.currentTarget.select());
+      }}
+      onBlur={() => {
+        focused.current = false;
+        commit();
+      }}
+      onChange={(e) => {
+        const t = e.target.value;
+        setText(t);
+        const trimmed = t.trim();
+        if (trimmed === '') return; // allow empty while editing
+        const n = Number(trimmed);
+        if (Number.isFinite(n)) onValueChange(n);
+      }}
+      className={className}
+    />
+  );
+};
 
 const WorkoutEditor: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -936,6 +987,19 @@ const WorkoutEditor: React.FC = () => {
     setWorkout(updated);
   };
 
+  const deleteSet = (exId: string, setId: string) => {
+    const updated = {
+      ...workout,
+      exercises: workout.exercises.map(ex => {
+        if (ex.id !== exId) return ex;
+        const next = ex.sets.filter(s => s.id !== setId);
+        // Keep at least one empty set so the exercise doesn't become unusable.
+        return { ...ex, sets: next.length > 0 ? next : [{ id: generateId(), weight: 0, reps: 0, completed: false }] };
+      })
+    };
+    setWorkout(updated);
+  };
+
   const handleCreateExercise = async () => {
       if (!newExName) return;
       setIsProcessing(true);
@@ -977,7 +1041,7 @@ const WorkoutEditor: React.FC = () => {
   const percentage = totalSets > 0 ? Math.round((completedSets / totalSets) * 100) : 0;
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="flex flex-col h-screen bg-gray-50 animate__animated animate__fadeIn" style={{ ['--animate-duration' as any]: '220ms' }}>
       <div className="bg-white/80 backdrop-blur-md px-4 py-3 flex items-center justify-between sticky top-0 z-20 border-b border-gray-100 shadow-sm">
         <button onClick={handleSaveBack} className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-gray-600 active:scale-95 transition-transform"><ArrowLeft size={20}/></button>
         <div className="flex flex-col items-center" onClick={toggleTimer}>
@@ -1011,14 +1075,27 @@ const WorkoutEditor: React.FC = () => {
                        <div key={set.id} className="flex items-center gap-3">
                           <div className="w-6 text-center text-xs font-bold text-gray-300">{idx + 1}</div>
                           <div className="flex-1 bg-gray-50 rounded-xl px-3 py-2 flex items-center gap-2">
-                             <input type="number" value={set.weight} onChange={e => updateSet(ex.id, set.id, 'weight', Number(e.target.value))} className="w-full bg-transparent outline-none font-bold text-gray-900 text-center" />
+                             <SetNumberInput
+                               value={set.weight}
+                               inputMode="decimal"
+                               onValueChange={(v) => updateSet(ex.id, set.id, 'weight', v)}
+                               className="w-full bg-transparent outline-none font-bold text-gray-900 text-center"
+                             />
                              <span className="text-xs text-gray-400 font-medium">{currentUnit}</span>
                           </div>
                           <div className="flex-1 bg-gray-50 rounded-xl px-3 py-2 flex items-center gap-2">
-                             <input type="number" value={set.reps} onChange={e => updateSet(ex.id, set.id, 'reps', Number(e.target.value))} className="w-full bg-transparent outline-none font-bold text-gray-900 text-center" />
+                             <SetNumberInput
+                               value={set.reps}
+                               inputMode="numeric"
+                               onValueChange={(v) => updateSet(ex.id, set.id, 'reps', v)}
+                               className="w-full bg-transparent outline-none font-bold text-gray-900 text-center"
+                             />
                              <span className="text-xs text-gray-400 font-medium">REPS</span>
                           </div>
-                          <button onClick={() => updateSet(ex.id, set.id, 'completed', !set.completed)} className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${set.completed ? 'bg-cyan-400 text-white shadow-lg shadow-cyan-200' : 'bg-gray-100 text-gray-300'}`}><Check size={18} /></button>
+                          <button onClick={() => updateSet(ex.id, set.id, 'completed', !set.completed)} className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${set.completed ? 'bg-cyan-400 text-white shadow-lg shadow-cyan-200' : 'bg-gray-100 text-gray-300'}`}><Check size={16} /></button>
+                          <button onClick={() => deleteSet(ex.id, set.id)} className="w-9 h-9 rounded-xl flex items-center justify-center bg-gray-100 text-gray-300 hover:text-red-400 transition-all active:scale-95" aria-label="Delete set">
+                            <Trash2 size={16} />
+                          </button>
                        </div>
                     ))}
                  </div>
@@ -1071,7 +1148,7 @@ const BottomNav = () => {
   if (location.pathname.startsWith('/workout/')) return null;
 
   return (
-      <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/90 backdrop-blur-md border-t border-gray-100 flex justify-around items-center py-4 pb-8 z-50">
+      <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/90 backdrop-blur-md border-t border-gray-100 flex justify-around items-center py-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] z-50">
         <Link to="/" className={`flex flex-col items-center gap-1 transition-colors ${isActive('/') ? 'text-cyan-400' : 'text-gray-300 hover:text-gray-500'}`}>
             <Home size={24} strokeWidth={isActive('/') ? 3 : 2} />
         </Link>

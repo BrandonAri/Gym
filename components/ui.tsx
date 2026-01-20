@@ -236,8 +236,10 @@ export const SwipeableItem: React.FC<{
     className?: string
 }> = ({ children, onSwipeLeft, onSwipeRight, className }) => {
     // How far the row can slide to reveal the action button.
-    const ACTION_WIDTH = 120; // px (a bit wider so the buttons fully show)
-    const OPEN_THRESHOLD = ACTION_WIDTH * 0.35;
+    const ACTION_WIDTH = 128; // px
+    // Make it easier to fully open on iPhone (one swipe should be enough)
+    const OPEN_THRESHOLD = Math.max(18, ACTION_WIDTH * 0.18);
+    const VELOCITY_OPEN = 0.55; // px/ms
 
     const [offsetX, setOffsetX] = useState(0);
     const offsetXRef = useRef(0);
@@ -245,11 +247,16 @@ export const SwipeableItem: React.FC<{
     const [lockedAxis, setLockedAxis] = useState<'x' | 'y' | null>(null);
 
     const start = useRef({ x: 0, y: 0 });
+    const startTime = useRef(0);
     const baseOffset = useRef(0); // offset at the start of drag (0 or +/- ACTION_WIDTH)
     const rafRef = useRef<number | null>(null);
 
     const setOffset = (x: number) => {
-        const clamped = Math.max(-ACTION_WIDTH, Math.min(ACTION_WIDTH, x));
+        // A tiny rubber-band feel near the edges so it doesn't feel "stuck".
+        let v = x;
+        if (v > ACTION_WIDTH) v = ACTION_WIDTH + (v - ACTION_WIDTH) * 0.12;
+        if (v < -ACTION_WIDTH) v = -ACTION_WIDTH + (v + ACTION_WIDTH) * 0.12;
+        const clamped = Math.max(-ACTION_WIDTH, Math.min(ACTION_WIDTH, v));
         offsetXRef.current = clamped;
         if (rafRef.current) cancelAnimationFrame(rafRef.current);
         rafRef.current = requestAnimationFrame(() => setOffsetX(clamped));
@@ -261,6 +268,7 @@ export const SwipeableItem: React.FC<{
 
     const handlePointerDown = (e: React.PointerEvent) => {
         start.current = { x: e.clientX, y: e.clientY };
+        startTime.current = performance.now();
         baseOffset.current = offsetXRef.current;
         setLockedAxis(null);
         setIsDragging(true);
@@ -287,8 +295,11 @@ export const SwipeableItem: React.FC<{
 
         if (lockedAxis === 'x') {
             // While dragging horizontally, prevent scroll jitter.
+            // NOTE: the real fix for iOS is touch-action: pan-y (below), not preventDefault.
+            // We keep preventDefault as a best-effort for non-iOS browsers.
             e.preventDefault?.();
-            setOffset(baseOffset.current + dx);
+            const BOOST = 1.25; // make it feel less "heavy" on touch
+            setOffset(baseOffset.current + dx * BOOST);
         }
     };
 
@@ -305,8 +316,15 @@ export const SwipeableItem: React.FC<{
         }
 
         const x = offsetXRef.current;
-        if (x > OPEN_THRESHOLD) openRight();
-        else if (x < -OPEN_THRESHOLD) openLeft();
+        const dt = Math.max(1, performance.now() - startTime.current);
+        const dx = x - baseOffset.current;
+        const v = Math.abs(dx) / dt;
+
+        // Prefer a one-swipe open if user either:
+        // 1) dragged past a small threshold, OR
+        // 2) flicked quickly with enough velocity.
+        if (x > OPEN_THRESHOLD || (dx > 12 && v > VELOCITY_OPEN)) openRight();
+        else if (x < -OPEN_THRESHOLD || (dx < -12 && v > VELOCITY_OPEN)) openLeft();
         else close();
 
         setLockedAxis(null);
@@ -321,17 +339,21 @@ export const SwipeableItem: React.FC<{
         }
     };
 
-    const actionCommon = "h-full w-[120px] flex items-center justify-center font-bold";
+    const actionCommon = "h-full flex items-center justify-center font-bold";
     const showCopy = offsetX > 10;
     const showDelete = offsetX < -10;
 
     return (
-        <div className="relative w-full overflow-hidden rounded-3xl mb-4 select-none touch-pan-y">
+        <div
+            className="relative w-full overflow-hidden rounded-3xl mb-4 select-none"
+            style={{ touchAction: 'pan-y' }}
+        >
             {/* Background actions (clickable) */}
             <div className="absolute inset-0 flex justify-between items-stretch">
                 <button
                     type="button"
                     className={`${actionCommon} ${showCopy ? 'opacity-100' : 'opacity-0'} transition-opacity duration-150 bg-green-50 text-green-600`}
+                    style={{ width: ACTION_WIDTH }}
                     onClick={() => { haptic(10); onSwipeRight(); close(); }}
                     aria-label="Copy workout"
                 >
@@ -340,6 +362,7 @@ export const SwipeableItem: React.FC<{
                 <button
                     type="button"
                     className={`${actionCommon} ${showDelete ? 'opacity-100' : 'opacity-0'} transition-opacity duration-150 bg-red-50 text-red-500`}
+                    style={{ width: ACTION_WIDTH }}
                     onClick={() => { haptic(10); onSwipeLeft(); close(); }}
                     aria-label="Delete workout"
                 >
@@ -350,12 +373,11 @@ export const SwipeableItem: React.FC<{
             {/* Foreground content */}
             <div
                 className={`relative bg-white will-change-transform ${isDragging ? '' : 'transition-transform duration-200 ease-out'} ${className || ''}`}
-                style={{ transform: `translateX(${offsetX}px)`, willChange: 'transform' }}
+                style={{ transform: `translate3d(${offsetX}px, 0, 0)`, willChange: 'transform', touchAction: 'pan-y' }}
                 onPointerDown={handlePointerDown}
                 onPointerMove={handlePointerMove}
                 onPointerUp={handlePointerUp}
                 onPointerCancel={handlePointerUp}
-                onPointerLeave={handlePointerUp}
                 onClickCapture={onClickCapture}
             >
                 {children}
@@ -393,15 +415,15 @@ export const Modal: React.FC<{ isOpen: boolean; onClose: () => void; title: stri
 }) => {
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md p-4 animate-in fade-in duration-300">
-      <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-300">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md p-4 animate__animated animate__fadeIn" style={{ ['--animate-duration' as any]: '260ms' }}>
+      <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-sm overflow-hidden animate__animated animate__zoomIn" style={{ ['--animate-duration' as any]: '260ms' }}>
         <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-white">
           <h3 className="font-bold text-xl text-gray-900 tracking-tight">{title}</h3>
           <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors">
             ✕
           </button>
         </div>
-        <div className="p-6 max-h-[70vh] overflow-y-auto">
+        <div className="p-6 max-h-[85vh] overflow-y-auto">
           {children}
         </div>
       </div>
