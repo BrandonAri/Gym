@@ -545,8 +545,8 @@ const HistoryView = () => {
     }) => {
         if (!isOpen) return null;
         return (
-            <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/40 backdrop-blur-sm animate-in fade-in">
-                <div className="bg-white rounded-t-[32px] p-6 pb-12 animate-in slide-in-from-bottom duration-300">
+            <div className="fixed inset-0 z-50 flex flex-col justify-end bg-gradient-to-t from-black/35 via-black/20 to-black/5 backdrop-blur-sm animate-in fade-in duration-500">
+                <div className="bg-white rounded-t-[32px] p-6 pb-[calc(3rem+env(safe-area-inset-bottom))] max-h-[80vh] overflow-y-auto animate-in slide-in-from-bottom duration-500 ease-out">
                     <div className="w-12 h-1 bg-gray-200 rounded-full mx-auto mb-6"></div>
                     <h3 className="font-bold text-xl text-gray-900 mb-6 text-center">Workout Options</h3>
                     <div className="space-y-3">
@@ -702,8 +702,8 @@ const CalendarView = () => {
    const ActionMenu: React.FC<{ isOpen: boolean, onClose: () => void, onCopy: () => void, onDelete: () => void }> = ({ isOpen, onClose, onCopy, onDelete }) => {
         if (!isOpen) return null;
         return (
-            <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/40 backdrop-blur-sm animate-in fade-in">
-                <div className="bg-white rounded-t-[32px] p-6 pb-12 animate-in slide-in-from-bottom duration-300">
+            <div className="fixed inset-0 z-50 flex flex-col justify-end bg-gradient-to-t from-black/35 via-black/20 to-black/5 backdrop-blur-sm animate-in fade-in duration-500">
+                <div className="bg-white rounded-t-[32px] p-6 pb-[calc(3rem+env(safe-area-inset-bottom))] max-h-[80vh] overflow-y-auto animate-in slide-in-from-bottom duration-500 ease-out">
                     <div className="w-12 h-1 bg-gray-200 rounded-full mx-auto mb-6"></div>
                     <h3 className="font-bold text-xl text-gray-900 mb-6 text-center">Workout Options</h3>
                     <div className="space-y-3">

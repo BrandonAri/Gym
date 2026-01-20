@@ -2,6 +2,16 @@ import React, { useState, useRef, useEffect } from 'react';
 import { getMediaFromDB } from '../services/utils';
 import { ImageOff, Loader2, Trash2, Copy } from 'lucide-react';
 
+// Best-effort haptic feedback (no-op on platforms that don't support it)
+const triggerHaptic = (pattern: number | number[] = 10) => {
+  try {
+    const nav: any = typeof navigator !== 'undefined' ? navigator : null;
+    if (nav && typeof nav.vibrate === 'function') nav.vibrate(pattern);
+  } catch {
+    // ignore
+  }
+};
+
 // --- Media Resolver Component ---
 export const MediaResolver: React.FC<{ 
   mediaId?: string; 
@@ -116,6 +126,7 @@ export function useLongPress(
   useEffect(() => {
     if (startLongPress) {
       timerRef.current = window.setTimeout(() => {
+        triggerHaptic(10);
         callback();
         setStartLongPress(false);
       }, ms);
@@ -223,39 +234,77 @@ export const SwipeableItem: React.FC<{
 }> = ({ children, onSwipeLeft, onSwipeRight, className }) => {
     const [offsetX, setOffsetX] = useState(0);
     const [isDragging, setIsDragging] = useState(false);
-    const startX = useRef(0);
-    
+    const start = useRef({ x: 0, y: 0 });
+    const direction = useRef<'x' | 'y' | null>(null);
+
     // Threshold to trigger action
-    const THRESHOLD = 100; 
+    const THRESHOLD = 100;
+    const MAX_VISUAL = 200;
+    const LOCK_DISTANCE = 8;
+
+    const endDrag = (e: React.PointerEvent, cancelled = false) => {
+        if (!isDragging) return;
+
+        // Release capture if we took it
+        try {
+            (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+        } catch {
+            // ignore
+        }
+
+        if (!cancelled && direction.current === 'x') {
+            if (offsetX > THRESHOLD) {
+                triggerHaptic(10);
+                onSwipeRight();
+            } else if (offsetX < -THRESHOLD) {
+                triggerHaptic(10);
+                onSwipeLeft();
+            }
+        }
+
+        setIsDragging(false);
+        direction.current = null;
+        setOffsetX(0);
+    };
 
     const handlePointerDown = (e: React.PointerEvent) => {
-        startX.current = e.clientX;
+        start.current = { x: e.clientX, y: e.clientY };
+        direction.current = null;
         setIsDragging(true);
-        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     };
 
     const handlePointerMove = (e: React.PointerEvent) => {
         if (!isDragging) return;
-        const currentX = e.clientX;
-        const diff = currentX - startX.current;
-        // Limit swipe range visually
-        if (Math.abs(diff) < 200) {
-             setOffsetX(diff);
-        }
-    };
 
-    const handlePointerUp = (e: React.PointerEvent) => {
-        setIsDragging(false);
-        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-        
-        if (offsetX > THRESHOLD) {
-            // Swiped Right -> Copy
-            onSwipeRight();
-        } else if (offsetX < -THRESHOLD) {
-            // Swiped Left -> Delete
-            onSwipeLeft();
+        const dx = e.clientX - start.current.x;
+        const dy = e.clientY - start.current.y;
+
+        // Lock direction once the user moves a little
+        if (!direction.current) {
+            if (Math.abs(dx) < LOCK_DISTANCE && Math.abs(dy) < LOCK_DISTANCE) return;
+            direction.current = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+
+            // Only capture pointer if this is a horizontal swipe; let vertical scrolling happen normally.
+            if (direction.current === 'x') {
+                try {
+                    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+                } catch {
+                    // ignore
+                }
+            } else {
+                // User is scrolling; bail out of swipe
+                setIsDragging(false);
+                setOffsetX(0);
+                return;
+            }
         }
-        setOffsetX(0);
+
+        if (direction.current === 'x') {
+            // Prevent the browser from treating this as a scroll gesture
+            e.preventDefault();
+            const clamped = Math.max(-MAX_VISUAL, Math.min(MAX_VISUAL, dx));
+            setOffsetX(clamped);
+        }
     };
 
     const getBgColor = () => {
@@ -265,7 +314,7 @@ export const SwipeableItem: React.FC<{
     };
 
     return (
-        <div className="relative w-full overflow-hidden rounded-3xl mb-4 select-none touch-none">
+        <div className="relative w-full overflow-hidden rounded-3xl mb-4 select-none touch-pan-y">
             {/* Background Actions Layer */}
             <div className={`absolute inset-0 flex justify-between items-center px-6 transition-colors duration-200 ${getBgColor()}`}>
                  <div className={`flex items-center gap-2 font-bold ${offsetX > 50 ? 'opacity-100 text-green-600' : 'opacity-0'}`}>
@@ -280,12 +329,13 @@ export const SwipeableItem: React.FC<{
 
             {/* Foreground Content */}
             <div 
-                className={`relative bg-white transition-transform duration-75 ease-out ${className}`}
-                style={{ transform: `translateX(${offsetX}px)` }}
+                className={`relative bg-white transition-transform duration-75 ease-out ${className || ''}`}
+                style={{ transform: `translateX(${offsetX}px)`, touchAction: 'pan-y' as any }}
                 onPointerDown={handlePointerDown}
                 onPointerMove={handlePointerMove}
-                onPointerUp={handlePointerUp}
-                onPointerLeave={handlePointerUp}
+                onPointerUp={(e) => endDrag(e)}
+                onPointerCancel={(e) => endDrag(e, true)}
+                onPointerLeave={(e) => endDrag(e, true)}
             >
                 {children}
             </div>
@@ -295,8 +345,12 @@ export const SwipeableItem: React.FC<{
 
 // --- Components ---
 
-export const Button: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'danger' | 'ghost' }> = ({ 
-  className = '', variant = 'primary', ...props 
+export const Button: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'danger' | 'ghost' }> = ({
+  className = '',
+  variant = 'primary',
+  onClick,
+  disabled,
+  ...rest
 }) => {
   const base = "px-6 py-3 rounded-2xl font-bold transition-all active:scale-95 flex items-center justify-center gap-2";
   const variants = {
@@ -305,7 +359,21 @@ export const Button: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & { 
     danger: "bg-red-50 text-red-500 hover:bg-red-100",
     ghost: "bg-transparent text-gray-500 hover:bg-gray-50"
   };
-  return <button className={`${base} ${variants[variant]} ${className}`} {...props} />;
+
+  const handleClick: React.MouseEventHandler<HTMLButtonElement> = (e) => {
+    if (disabled) return;
+    triggerHaptic(10);
+    onClick?.(e);
+  };
+
+  return (
+    <button
+      className={`${base} ${variants[variant]} ${className}`}
+      onClick={handleClick}
+      disabled={disabled}
+      {...rest}
+    />
+  );
 };
 
 export const Modal: React.FC<{ isOpen: boolean; onClose: () => void; title: string; children: React.ReactNode }> = ({ 
