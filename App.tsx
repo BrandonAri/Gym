@@ -121,6 +121,7 @@ const GymProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   };
 
   const login = async () => {
+    const FORCE_GOOGLE_PICKER_KEY = 'ironlog_force_google_picker_once';
     // Explicitly using window.location.origin to ensure redirect goes back to the correct environment (cloud/local)
     // IMPORTANT: Add this URL to your Supabase Dashboard -> Authentication -> URL Configuration -> Redirect URLs
     let redirectUrl = window.location.origin;
@@ -132,16 +133,24 @@ const GymProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     
     console.log("Logging in with redirect URL:", redirectUrl);
     
+    const forcePicker = localStorage.getItem(FORCE_GOOGLE_PICKER_KEY) === '1';
+    if (forcePicker) localStorage.removeItem(FORCE_GOOGLE_PICKER_KEY);
+
     const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-            redirectTo: redirectUrl
-        }
+      provider: 'google',
+      options: {
+        redirectTo: redirectUrl,
+        // Only force the account chooser right after an explicit sign-out.
+        // (Prevents annoying re-prompting on normal app opens.)
+        ...(forcePicker ? { queryParams: { prompt: 'select_account' } } : {})
+      }
     });
     if (error) alert("Login failed: " + error.message);
   };
 
   const logout = async () => {
+    // Next login click should show the Google account picker once.
+    localStorage.setItem('ironlog_force_google_picker_once', '1');
     await supabase.auth.signOut();
     setUser(null);
   };
@@ -545,8 +554,8 @@ const HistoryView = () => {
     }) => {
         if (!isOpen) return null;
         return (
-            <div className="fixed inset-0 z-50 flex flex-col justify-end bg-gradient-to-t from-black/35 via-black/20 to-black/5 backdrop-blur-sm animate-in fade-in duration-500">
-                <div className="bg-white rounded-t-[32px] p-6 pb-[calc(3rem+env(safe-area-inset-bottom))] max-h-[80vh] overflow-y-auto animate-in slide-in-from-bottom duration-500 ease-out">
+            <div className="fixed inset-0 z-[100] flex flex-col justify-end bg-gradient-to-t from-black/40 via-black/25 to-black/10 backdrop-blur-sm animate-in fade-in duration-500">
+                <div className="bg-white rounded-t-[32px] p-6 pb-[calc(6rem+env(safe-area-inset-bottom))] max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom duration-500 ease-out">
                     <div className="w-12 h-1 bg-gray-200 rounded-full mx-auto mb-6"></div>
                     <h3 className="font-bold text-xl text-gray-900 mb-6 text-center">Workout Options</h3>
                     <div className="space-y-3">
@@ -702,8 +711,8 @@ const CalendarView = () => {
    const ActionMenu: React.FC<{ isOpen: boolean, onClose: () => void, onCopy: () => void, onDelete: () => void }> = ({ isOpen, onClose, onCopy, onDelete }) => {
         if (!isOpen) return null;
         return (
-            <div className="fixed inset-0 z-50 flex flex-col justify-end bg-gradient-to-t from-black/35 via-black/20 to-black/5 backdrop-blur-sm animate-in fade-in duration-500">
-                <div className="bg-white rounded-t-[32px] p-6 pb-[calc(3rem+env(safe-area-inset-bottom))] max-h-[80vh] overflow-y-auto animate-in slide-in-from-bottom duration-500 ease-out">
+            <div className="fixed inset-0 z-[100] flex flex-col justify-end bg-gradient-to-t from-black/40 via-black/25 to-black/10 backdrop-blur-sm animate-in fade-in duration-500">
+                <div className="bg-white rounded-t-[32px] p-6 pb-[calc(6rem+env(safe-area-inset-bottom))] max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom duration-500 ease-out">
                     <div className="w-12 h-1 bg-gray-200 rounded-full mx-auto mb-6"></div>
                     <h3 className="font-bold text-xl text-gray-900 mb-6 text-center">Workout Options</h3>
                     <div className="space-y-3">

@@ -2,13 +2,16 @@ import React, { useState, useRef, useEffect } from 'react';
 import { getMediaFromDB } from '../services/utils';
 import { ImageOff, Loader2, Trash2, Copy } from 'lucide-react';
 
-// Best-effort haptic feedback (no-op on platforms that don't support it)
-const triggerHaptic = (pattern: number | number[] = 10) => {
+// Best-effort haptics (works on many Android devices; iOS Safari/PWAs generally do NOT support vibration).
+const haptic = (pattern: number | number[] = 10) => {
   try {
-    const nav: any = typeof navigator !== 'undefined' ? navigator : null;
-    if (nav && typeof nav.vibrate === 'function') nav.vibrate(pattern);
+    // @ts-ignore
+    if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+      // @ts-ignore
+      navigator.vibrate(pattern);
+    }
   } catch {
-    // ignore
+    // no-op
   }
 };
 
@@ -126,7 +129,7 @@ export function useLongPress(
   useEffect(() => {
     if (startLongPress) {
       timerRef.current = window.setTimeout(() => {
-        triggerHaptic(10);
+        haptic(10);
         callback();
         setStartLongPress(false);
       }, ms);
@@ -232,110 +235,128 @@ export const SwipeableItem: React.FC<{
     onSwipeRight: () => void,
     className?: string
 }> = ({ children, onSwipeLeft, onSwipeRight, className }) => {
+    // How far the row can slide to reveal the action button.
+    const ACTION_WIDTH = 120; // px (a bit wider so the buttons fully show)
+    const OPEN_THRESHOLD = ACTION_WIDTH * 0.35;
+
     const [offsetX, setOffsetX] = useState(0);
+    const offsetXRef = useRef(0);
     const [isDragging, setIsDragging] = useState(false);
+    const [lockedAxis, setLockedAxis] = useState<'x' | 'y' | null>(null);
+
     const start = useRef({ x: 0, y: 0 });
-    const direction = useRef<'x' | 'y' | null>(null);
+    const baseOffset = useRef(0); // offset at the start of drag (0 or +/- ACTION_WIDTH)
+    const rafRef = useRef<number | null>(null);
 
-    // Threshold to trigger action
-    const THRESHOLD = 100;
-    const MAX_VISUAL = 200;
-    const LOCK_DISTANCE = 8;
-
-    const endDrag = (e: React.PointerEvent, cancelled = false) => {
-        if (!isDragging) return;
-
-        // Release capture if we took it
-        try {
-            (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-        } catch {
-            // ignore
-        }
-
-        if (!cancelled && direction.current === 'x') {
-            if (offsetX > THRESHOLD) {
-                triggerHaptic(10);
-                onSwipeRight();
-            } else if (offsetX < -THRESHOLD) {
-                triggerHaptic(10);
-                onSwipeLeft();
-            }
-        }
-
-        setIsDragging(false);
-        direction.current = null;
-        setOffsetX(0);
+    const setOffset = (x: number) => {
+        const clamped = Math.max(-ACTION_WIDTH, Math.min(ACTION_WIDTH, x));
+        offsetXRef.current = clamped;
+        if (rafRef.current) cancelAnimationFrame(rafRef.current);
+        rafRef.current = requestAnimationFrame(() => setOffsetX(clamped));
     };
+
+    const close = () => setOffset(0);
+    const openLeft = () => setOffset(-ACTION_WIDTH); // reveal Delete
+    const openRight = () => setOffset(ACTION_WIDTH); // reveal Copy
 
     const handlePointerDown = (e: React.PointerEvent) => {
         start.current = { x: e.clientX, y: e.clientY };
-        direction.current = null;
+        baseOffset.current = offsetXRef.current;
+        setLockedAxis(null);
         setIsDragging(true);
     };
 
     const handlePointerMove = (e: React.PointerEvent) => {
         if (!isDragging) return;
-
         const dx = e.clientX - start.current.x;
         const dy = e.clientY - start.current.y;
 
-        // Lock direction once the user moves a little
-        if (!direction.current) {
-            if (Math.abs(dx) < LOCK_DISTANCE && Math.abs(dy) < LOCK_DISTANCE) return;
-            direction.current = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
-
-            // Only capture pointer if this is a horizontal swipe; let vertical scrolling happen normally.
-            if (direction.current === 'x') {
-                try {
-                    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-                } catch {
-                    // ignore
-                }
+        // Direction lock: only capture and drag when it's clearly a horizontal gesture.
+        if (!lockedAxis) {
+            const adx = Math.abs(dx);
+            const ady = Math.abs(dy);
+            if (adx < 6 && ady < 6) return;
+            if (adx > ady * 1.2) {
+                setLockedAxis('x');
+                (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
             } else {
-                // User is scrolling; bail out of swipe
-                setIsDragging(false);
-                setOffsetX(0);
-                return;
+                setLockedAxis('y');
+                return; // let the page scroll
             }
         }
 
-        if (direction.current === 'x') {
-            // Prevent the browser from treating this as a scroll gesture
-            e.preventDefault();
-            const clamped = Math.max(-MAX_VISUAL, Math.min(MAX_VISUAL, dx));
-            setOffsetX(clamped);
+        if (lockedAxis === 'x') {
+            // While dragging horizontally, prevent scroll jitter.
+            e.preventDefault?.();
+            setOffset(baseOffset.current + dx);
         }
     };
 
-    const getBgColor = () => {
-        if (offsetX > 50) return 'bg-green-100 border-green-200';
-        if (offsetX < -50) return 'bg-red-100 border-red-200';
-        return 'bg-white border-gray-50';
+    const handlePointerUp = (e: React.PointerEvent) => {
+        if (!isDragging) return;
+        setIsDragging(false);
+        try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); } catch {}
+
+        if (lockedAxis !== 'x') {
+            // If an action is open, a simple tap closes it.
+            if (offsetXRef.current !== 0) close();
+            setLockedAxis(null);
+            return;
+        }
+
+        const x = offsetXRef.current;
+        if (x > OPEN_THRESHOLD) openRight();
+        else if (x < -OPEN_THRESHOLD) openLeft();
+        else close();
+
+        setLockedAxis(null);
     };
+
+    const onClickCapture = (e: React.MouseEvent) => {
+        // If actions are open, tapping the row closes it instead of navigating.
+        if (offsetXRef.current !== 0) {
+            e.preventDefault();
+            e.stopPropagation();
+            close();
+        }
+    };
+
+    const actionCommon = "h-full w-[120px] flex items-center justify-center font-bold";
+    const showCopy = offsetX > 10;
+    const showDelete = offsetX < -10;
 
     return (
         <div className="relative w-full overflow-hidden rounded-3xl mb-4 select-none touch-pan-y">
-            {/* Background Actions Layer */}
-            <div className={`absolute inset-0 flex justify-between items-center px-6 transition-colors duration-200 ${getBgColor()}`}>
-                 <div className={`flex items-center gap-2 font-bold ${offsetX > 50 ? 'opacity-100 text-green-600' : 'opacity-0'}`}>
-                    <Copy size={24} />
-                    Copy
-                 </div>
-                 <div className={`flex items-center gap-2 font-bold ${offsetX < -50 ? 'opacity-100 text-red-500' : 'opacity-0'}`}>
-                    Delete
-                    <Trash2 size={24} />
-                 </div>
+            {/* Background actions (clickable) */}
+            <div className="absolute inset-0 flex justify-between items-stretch">
+                <button
+                    type="button"
+                    className={`${actionCommon} ${showCopy ? 'opacity-100' : 'opacity-0'} transition-opacity duration-150 bg-green-50 text-green-600`}
+                    onClick={() => { haptic(10); onSwipeRight(); close(); }}
+                    aria-label="Copy workout"
+                >
+                    <span className="flex items-center gap-2"><Copy size={20} /> Copy</span>
+                </button>
+                <button
+                    type="button"
+                    className={`${actionCommon} ${showDelete ? 'opacity-100' : 'opacity-0'} transition-opacity duration-150 bg-red-50 text-red-500`}
+                    onClick={() => { haptic(10); onSwipeLeft(); close(); }}
+                    aria-label="Delete workout"
+                >
+                    <span className="flex items-center gap-2">Delete <Trash2 size={20} /></span>
+                </button>
             </div>
 
-            {/* Foreground Content */}
-            <div 
-                className={`relative bg-white transition-transform duration-75 ease-out ${className || ''}`}
-                style={{ transform: `translateX(${offsetX}px)`, touchAction: 'pan-y' as any }}
+            {/* Foreground content */}
+            <div
+                className={`relative bg-white will-change-transform ${isDragging ? '' : 'transition-transform duration-200 ease-out'} ${className || ''}`}
+                style={{ transform: `translateX(${offsetX}px)`, willChange: 'transform' }}
                 onPointerDown={handlePointerDown}
                 onPointerMove={handlePointerMove}
-                onPointerUp={(e) => endDrag(e)}
-                onPointerCancel={(e) => endDrag(e, true)}
-                onPointerLeave={(e) => endDrag(e, true)}
+                onPointerUp={handlePointerUp}
+                onPointerCancel={handlePointerUp}
+                onPointerLeave={handlePointerUp}
+                onClickCapture={onClickCapture}
             >
                 {children}
             </div>
@@ -345,12 +366,8 @@ export const SwipeableItem: React.FC<{
 
 // --- Components ---
 
-export const Button: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'danger' | 'ghost' }> = ({
-  className = '',
-  variant = 'primary',
-  onClick,
-  disabled,
-  ...rest
+export const Button: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'danger' | 'ghost' }> = ({ 
+  className = '', variant = 'primary', onClick, ...props 
 }) => {
   const base = "px-6 py-3 rounded-2xl font-bold transition-all active:scale-95 flex items-center justify-center gap-2";
   const variants = {
@@ -359,19 +376,14 @@ export const Button: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & { 
     danger: "bg-red-50 text-red-500 hover:bg-red-100",
     ghost: "bg-transparent text-gray-500 hover:bg-gray-50"
   };
-
-  const handleClick: React.MouseEventHandler<HTMLButtonElement> = (e) => {
-    if (disabled) return;
-    triggerHaptic(10);
-    onClick?.(e);
-  };
-
   return (
     <button
       className={`${base} ${variants[variant]} ${className}`}
-      onClick={handleClick}
-      disabled={disabled}
-      {...rest}
+      {...props}
+      onClick={(e) => {
+        haptic(10);
+        onClick?.(e);
+      }}
     />
   );
 };
