@@ -1201,7 +1201,7 @@ const WorkoutEditor: React.FC = () => {
                     onClick={(e) => {
                       e.stopPropagation();
                       if (isUsed) {
-                        alert('This exercise is used in existing workouts and can't be deleted yet.');
+                        alert("This exercise is used in existing workouts and can't be deleted yet.");
                         return;
                       }
                       if (confirm(`Delete "${def.name}"?`)) {
