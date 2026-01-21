@@ -506,18 +506,6 @@ const Dashboard: React.FC = () => {
       )}
   </div>
 
-      {/* Floating action button: keep it low (overlaps the bottom bar), but ensure it renders ABOVE the nav (z-50). */}
-      <Portal>
-      <div className="fixed left-1/2 -translate-x-1/2 z-[1200] bottom-[calc(1.25rem+env(safe-area-inset-bottom))]">
-	         <button 
-           onClick={() => navigate('/workout/new')}
-	           className="w-14 h-14 bg-amber-400 text-gray-900 rounded-full shadow-lg shadow-amber-200 flex items-center justify-center hover:bg-amber-500 active:scale-90 transition-all"
-         >
-           <Plus size={28} />
-         </button>
-      </div>
-      </Portal>
-
       <Modal isOpen={copyModalOpen} onClose={() => setCopyModalOpen(false)} title="Copy Workout">
          <p className="mb-4 text-gray-600">Select a date to schedule this workout:</p>
          <Input 
@@ -1463,40 +1451,54 @@ const WorkoutEditor: React.FC = () => {
          <Button onClick={handleCreateExercise} disabled={isProcessing} className="w-full">{isProcessing ? 'Processing...' : 'Save'}</Button>
       </Modal>
 
-      <Modal isOpen={showReport} onClose={handleExitReport} title="Session Report" panelClassName="max-w-sm w-[92%] max-h-[72vh]" contentClassName="p-6 overflow-hidden">
-	          <div className="flex flex-col items-center text-center">
-	            <div className="w-20 h-20 rounded-full bg-amber-50 flex items-center justify-center text-amber-500 mb-4 ring-8 ring-amber-50/50">
-	              <Check size={40} strokeWidth={4} />
-	            </div>
-	            <h2 className="text-2xl font-black text-gray-900 mb-1">Workout Complete</h2>
-	            <p className="text-gray-400 text-sm mb-6">Nice work — here’s your score.</p>
+      <Modal
+        isOpen={showReport}
+        onClose={handleExitReport}
+        title="Session Report"
+        overlayClassName="bg-gradient-to-b from-white/90 via-black/25 to-black/40 backdrop-blur-md"
+        panelClassName="max-w-sm w-[92%] max-h-[78vh]"
+        contentClassName="p-5"
+      >
+        <div className="flex flex-col items-center text-center">
+          <div className="w-16 h-16 rounded-full bg-amber-50 flex items-center justify-center text-amber-500 mb-3 ring-8 ring-amber-50/50">
+            <Check size={34} strokeWidth={4} />
+          </div>
+          <h2 className="text-2xl font-black text-gray-900 mb-1">Workout Complete</h2>
+          <p className="text-gray-400 text-sm mb-5">Nice work — here’s your score.</p>
 
-	            <div className="w-full flex flex-col gap-4 mb-6">
-	              <div className="bg-gray-50 p-6 rounded-3xl score-pop">
-	                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Duration</p>
-	                <p className="text-5xl font-black text-gray-900 mt-2">
-	                  {animMinutes}
-	                  <span className="text-base font-extrabold text-gray-400 ml-2">min</span>
-	                </p>
-	              </div>
+          <div className="w-full grid grid-cols-2 gap-3 mb-5">
+            <div className="bg-gray-50 p-4 rounded-3xl score-pop">
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Duration</p>
+              <p className="text-4xl font-black text-gray-900 mt-2 leading-none">
+                {animMinutes}
+                <span className="text-sm font-extrabold text-gray-400 ml-2">min</span>
+              </p>
+            </div>
 
-	              <div className="bg-gray-50 p-6 rounded-3xl score-pop">
-	                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Completion</p>
-	                <p className="text-5xl font-black text-gray-900 mt-2">{animCompletion}%</p>
-	              </div>
+            <div className="bg-gray-50 p-4 rounded-3xl score-pop">
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Completion</p>
+              <p className="text-4xl font-black text-gray-900 mt-2 leading-none">
+                {animCompletion}%
+              </p>
+            </div>
 
-	              <div className="bg-gray-50 p-6 rounded-3xl score-pop">
-	                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Total Volume</p>
-	                <p className="text-5xl font-black text-gray-900 mt-2">
-	                  {animVolume}
-	                  <span className="text-base font-extrabold text-gray-400 ml-2">{currentUnit}</span>
-	                </p>
-	              </div>
-	            </div>
+            <div className="bg-gray-50 p-4 rounded-3xl score-pop col-span-2">
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Total Volume</p>
+              <p className="text-4xl font-black text-gray-900 mt-2 leading-none">
+                {animVolume}
+                <span className="text-sm font-extrabold text-gray-400 ml-2">{currentUnit}</span>
+              </p>
+            </div>
+          </div>
 
-	            <Button onClick={handleShareReport} className="w-full">Share</Button>
-	            <button onClick={handleExitReport} className="mt-3 text-sm font-semibold text-gray-400 hover:text-gray-600 transition-colors">Back to Home</button>
-	          </div>
+          <Button onClick={handleShareReport} className="w-full">Share</Button>
+          <button
+            onClick={handleExitReport}
+            className="mt-3 text-sm font-semibold text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            Back to Home
+          </button>
+        </div>
       </Modal>
     </div>
   );
@@ -1637,6 +1639,29 @@ const OrientationLockOverlay: React.FC = () => {
   );
 };
 
+
+const FloatingAddButton = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Only show on the main dashboard (home).
+  if (location.pathname !== '/') return null;
+
+  return (
+    <Portal>
+      <div className="fixed left-1/2 -translate-x-1/2 z-[9999] bottom-[calc(1.25rem+env(safe-area-inset-bottom))]">
+        <button
+          onClick={() => navigate('/workout/new')}
+          className="pressable w-14 h-14 bg-amber-400 text-gray-900 rounded-full shadow-lg shadow-amber-200 flex items-center justify-center hover:bg-amber-500 active:scale-90 transition-all"
+          aria-label="Add workout"
+        >
+          <Plus size={28} />
+        </button>
+      </div>
+    </Portal>
+  );
+};
+
 const BottomNav = () => {
   const location = useLocation();
   const isActive = (path: string) => location.pathname === path;
@@ -1697,6 +1722,7 @@ const AppContent = () => {
         <Route path="/profile" element={<ProfileView />} />
         <Route path="/workout/:id" element={<WorkoutEditor />} />
       </Routes>
+      <FloatingAddButton />
       <BottomNav />
     </div>
   );

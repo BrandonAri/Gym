@@ -9,6 +9,7 @@ html, body {
   background: #ffffff;
   /* Prefer Apple system font on iOS/macOS; fall back cleanly elsewhere */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  overscroll-behavior: none;
 }
 
 input, button, textarea, select {

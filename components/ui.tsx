@@ -440,7 +440,7 @@ export const Modal: React.FC<{
       style={{ ['--animate-duration' as any]: '260ms' }}
     >
       <div
-        className={`bg-white rounded-[32px] shadow-2xl w-full max-w-md mx-4 animate__animated animate__zoomIn ${
+        className={`bg-white rounded-[32px] shadow-2xl w-full max-w-md mx-4 max-h-[92vh] overflow-hidden flex flex-col animate__animated animate__zoomIn ${
           panelClassName ?? ''
         }`}
         style={{ ['--animate-duration' as any]: '260ms' }}
@@ -455,7 +455,7 @@ export const Modal: React.FC<{
             ✕
           </button>
         </div>
-        <div className={contentClassName ?? 'p-6 max-h-[85vh] overflow-y-auto scroll-area'}>
+        <div className={`flex-1 ${contentClassName ?? 'p-6 overflow-y-auto scroll-area'}`}>
           {children}
         </div>
       </div>
