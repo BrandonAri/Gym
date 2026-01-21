@@ -685,6 +685,7 @@ const HistoryView = () => {
                     <Button variant="secondary" className="w-full" onClick={() => applyFilter('all', '')}>Clear Filters</Button>
                  </div>
             </Modal>
+            </div>
         </div>
     );
 };
