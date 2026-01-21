@@ -1,0 +1,21 @@
+/* Global polish for the PWA */
+:root {
+  /* Reduce the bright iOS tap highlight */
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+}
+
+html, body {
+  height: 100%;
+  background: #ffffff;
+  /* Prefer Apple system font on iOS/macOS; fall back cleanly elsewhere */
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+input, button, textarea, select {
+  font: inherit;
+}
+
+/* Keep scrolling feeling native */
+body {
+  -webkit-overflow-scrolling: touch;
+}

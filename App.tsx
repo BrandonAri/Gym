@@ -25,6 +25,7 @@ interface GymContextType {
   updateWorkout: (workout: Workout) => void;
   deleteWorkout: (id: string) => void;
   addExerciseDef: (def: ExerciseDef) => void;
+  deleteExerciseDef: (id: string) => void;
   copyWorkout: (workoutId: string, targetDate: string) => void;
 }
 
@@ -75,12 +76,15 @@ const GymProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   }, []);
 
   const mapUser = (authUser: any) => {
+      const unitKey = `ironlog_unit_${authUser.id}`;
+      const savedUnit = localStorage.getItem(unitKey);
+      const defaultUnit = (savedUnit === 'kg' || savedUnit === 'lbs') ? savedUnit : 'lbs';
       setUser({
           id: authUser.id,
           name: authUser.user_metadata.full_name || authUser.email?.split('@')[0] || 'User',
           email: authUser.email || '',
           photoUrl: authUser.user_metadata.avatar_url || `https://ui-avatars.com/api/?name=${authUser.email}&background=0D8ABC&color=fff`,
-          preferences: { defaultUnit: 'lbs' } // Could sync prefs to a 'profiles' table later
+          preferences: { defaultUnit }
       });
   };
 
@@ -158,6 +162,7 @@ const GymProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const toggleUnit = () => {
     if (!user) return;
     const newUnit = user.preferences.defaultUnit === 'kg' ? 'lbs' : 'kg';
+    localStorage.setItem(`ironlog_unit_${user.id}`, newUnit);
     setUser({ ...user, preferences: { ...user.preferences, defaultUnit: newUnit } });
   };
 
@@ -230,6 +235,14 @@ const GymProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     }
   };
 
+
+  const deleteExerciseDef = async (id: string) => {
+    setExerciseDefs(prev => prev.filter(d => d.id !== id));
+    if (user) {
+      await supabase.from('exercise_defs').delete().eq('id', id);
+    }
+  };
+
   const copyWorkout = (workoutId: string, targetDate: string) => {
     const source = workouts.find(w => w.id === workoutId);
     if (!source) return;
@@ -252,7 +265,7 @@ const GymProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <GymContext.Provider value={{
       user, isLoading, login, logout, toggleUnit, workouts, exerciseDefs,
-      addWorkout, updateWorkout, deleteWorkout, addExerciseDef, copyWorkout
+      addWorkout, updateWorkout, deleteWorkout, addExerciseDef, deleteExerciseDef, copyWorkout
     }}>
       {children}
     </GymContext.Provider>
@@ -481,7 +494,7 @@ const Dashboard: React.FC = () => {
         </div>
       )}
 
-      <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-20">
+      <div className="fixed left-1/2 -translate-x-1/2 z-60 bottom-[calc(1.25rem+env(safe-area-inset-bottom))]">
          <button 
            onClick={() => navigate('/workout/new')}
            className="w-14 h-14 bg-gray-100 text-gray-900 rounded-full shadow-lg shadow-gray-200 flex items-center justify-center hover:bg-gray-200 active:scale-90 transition-all"
@@ -854,7 +867,7 @@ const SetNumberInput: React.FC<{
 const WorkoutEditor: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { workouts, addWorkout, updateWorkout, deleteWorkout, exerciseDefs, addExerciseDef, user } = useContext(GymContext);
+  const { workouts, addWorkout, updateWorkout, deleteWorkout, exerciseDefs, addExerciseDef, deleteExerciseDef, user } = useContext(GymContext);
   
   const [workout, setWorkout] = useState<Workout>({
     id: generateId(),
@@ -877,16 +890,56 @@ const WorkoutEditor: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(0);
   const currentUnit = user?.preferences.defaultUnit.toUpperCase() || 'LBS';
 
+  const loadedIdRef = useRef<string | null>(null);
+  const isHydratingRef = useRef(false);
+  const isDirtyRef = useRef(false);
+  const editSeqRef = useRef(0);
+  const autosaveTimerRef = useRef<number | null>(null);
+
+  const markDirty = () => {
+    isDirtyRef.current = true;
+    editSeqRef.current += 1;
+  };
+
   useEffect(() => {
-    if (id && id !== 'new') {
-      const existing = workouts.find(w => w.id === id);
-      if (existing) {
-          setWorkout(existing);
-          const elapsed = existing.elapsedSeconds || 0;
-          const additional = existing.startTimestamp ? (Date.now() - existing.startTimestamp) / 1000 : 0;
-          setCurrentTime(elapsed + additional);
-      }
+    if (!id) return;
+
+    // New workout route: initialize a fresh draft.
+    if (id === 'new') {
+      if (loadedIdRef.current === 'new') return;
+      isHydratingRef.current = true;
+      isDirtyRef.current = false;
+      setWorkout({
+        id: generateId(),
+        date: formatDate(new Date()),
+        title: 'New Workout',
+        note: '',
+        exercises: [],
+        completed: false,
+        elapsedSeconds: 0,
+        startTimestamp: null
+      });
+      setCurrentTime(0);
+      loadedIdRef.current = 'new';
+      setTimeout(() => { isHydratingRef.current = false; }, 0);
+      return;
     }
+
+    // Existing workout: load once when available, but never clobber local edits.
+    if (loadedIdRef.current === id) return;
+    if (isDirtyRef.current) return;
+
+    const existing = workouts.find(w => w.id === id);
+    if (!existing) return;
+
+    isHydratingRef.current = true;
+    setWorkout(existing);
+    const elapsed = existing.elapsedSeconds || 0;
+    const additional = existing.startTimestamp ? (Date.now() - existing.startTimestamp) / 1000 : 0;
+    setCurrentTime(elapsed + additional);
+    loadedIdRef.current = id;
+    isDirtyRef.current = false;
+    setTimeout(() => { isHydratingRef.current = false; }, 0);
   }, [id, workouts]);
 
   useEffect(() => {
@@ -909,6 +962,29 @@ const WorkoutEditor: React.FC = () => {
       else addWorkout(w);
   };
 
+
+  useEffect(() => {
+    // Debounced autosave: prevents the editor from "jumping back" by keeping context/DB in sync.
+    if (isHydratingRef.current) return;
+    if (!isDirtyRef.current) return;
+    if (workout.exercises.length === 0) return;
+
+    const seq = editSeqRef.current;
+    if (autosaveTimerRef.current) window.clearTimeout(autosaveTimerRef.current);
+
+    autosaveTimerRef.current = window.setTimeout(() => {
+      // Only clear dirty if nothing changed since this save was scheduled.
+      saveWorkoutToContext(workout);
+      if (seq === editSeqRef.current) {
+        isDirtyRef.current = false;
+      }
+    }, 650);
+
+    return () => {
+      if (autosaveTimerRef.current) window.clearTimeout(autosaveTimerRef.current);
+    };
+  }, [workout]);
+
   const toggleTimer = () => {
       if (workout.completed) return; 
       const now = Date.now();
@@ -920,6 +996,7 @@ const WorkoutEditor: React.FC = () => {
       } else {
           updated = { ...workout, startTimestamp: now };
       }
+      markDirty();
       setWorkout(updated);
       if (updated.exercises.length > 0) saveWorkoutToContext(updated);
   };
@@ -962,6 +1039,7 @@ const WorkoutEditor: React.FC = () => {
     const def = exerciseDefs.find(d => d.id === defId);
     const newInstance: ExerciseInstance = { id: generateId(), defId, sets: [{ id: generateId(), weight: 0, reps: 0, completed: false }] };
     const updated = { ...baseWorkout, exercises: [...baseWorkout.exercises, newInstance] };
+    markDirty();
     setWorkout(updated);
     saveWorkoutToContext(updated); 
     setShowExModal(false);
@@ -972,6 +1050,7 @@ const WorkoutEditor: React.FC = () => {
       ...workout,
       exercises: workout.exercises.map(ex => ex.id === exId ? { ...ex, sets: ex.sets.map(s => s.id === setId ? { ...s, [field]: value } : s) } : ex)
     };
+    markDirty();
     setWorkout(updated);
   };
 
@@ -984,6 +1063,7 @@ const WorkoutEditor: React.FC = () => {
         return { ...ex, sets: [...ex.sets, { id: generateId(), weight: last?.weight || 0, reps: last?.reps || 0, completed: false }] };
       })
     };
+    markDirty();
     setWorkout(updated);
   };
 
@@ -997,6 +1077,7 @@ const WorkoutEditor: React.FC = () => {
         return { ...ex, sets: next.length > 0 ? next : [{ id: generateId(), weight: 0, reps: 0, completed: false }] };
       })
     };
+    markDirty();
     setWorkout(updated);
   };
 
@@ -1041,7 +1122,7 @@ const WorkoutEditor: React.FC = () => {
   const percentage = totalSets > 0 ? Math.round((completedSets / totalSets) * 100) : 0;
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50 animate__animated animate__fadeIn" style={{ ['--animate-duration' as any]: '220ms' }}>
+    <div className="flex flex-col h-screen bg-white animate__animated animate__fadeIn" style={{ ['--animate-duration' as any]: '220ms' }}>
       <div className="bg-white/80 backdrop-blur-md px-4 py-3 flex items-center justify-between sticky top-0 z-20 border-b border-gray-100 shadow-sm">
         <button onClick={handleSaveBack} className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-gray-600 active:scale-95 transition-transform"><ArrowLeft size={20}/></button>
         <div className="flex flex-col items-center" onClick={toggleTimer}>
@@ -1055,8 +1136,8 @@ const WorkoutEditor: React.FC = () => {
       </div>
 
       <div className="flex-1 overflow-y-auto p-6 pb-32">
-        <input value={workout.title} onChange={e => setWorkout(prev => ({ ...prev, title: e.target.value }))} className="text-3xl font-black bg-transparent w-full mb-2 outline-none text-gray-900 placeholder-gray-300" placeholder="Workout Title" />
-        <input value={workout.note} onChange={e => setWorkout(prev => ({ ...prev, note: e.target.value }))} className="text-base text-gray-500 bg-transparent w-full mb-8 outline-none placeholder-gray-300" placeholder="Add a note..." />
+        <input value={workout.title} onChange={e => { markDirty(); setWorkout(prev => ({ ...prev, title: e.target.value })); }} className="text-3xl font-black bg-transparent w-full mb-2 outline-none text-gray-900 placeholder-gray-300" placeholder="Workout Title" />
+        <input value={workout.note} onChange={e => { markDirty(); setWorkout(prev => ({ ...prev, note: e.target.value })); }} className="text-base text-gray-500 bg-transparent w-full mb-8 outline-none placeholder-gray-300" placeholder="Add a note..." />
         <div className="space-y-6">
           {workout.exercises.map((ex) => {
             const def = exerciseDefs.find(d => d.id === ex.defId);
@@ -1068,7 +1149,7 @@ const WorkoutEditor: React.FC = () => {
                        {(def.mediaId || def.mediaUrl) && (<div className="w-14 h-14 rounded-xl bg-gray-100 overflow-hidden relative"><MediaResolver mediaId={def.mediaId} mediaUrl={def.mediaUrl} type={def.mediaType} className="w-full h-full object-cover" /></div>)}
                        <div><h4 className="font-bold text-lg text-gray-900">{def.name}</h4><p className="text-xs text-gray-400">{ex.sets.length} Sets</p></div>
                     </div>
-                    <button onClick={() => setWorkout(p => ({...p, exercises: p.exercises.filter(e => e.id !== ex.id)}))} className="text-gray-300 hover:text-red-400"><X size={20}/></button>
+                    <button onClick={() => { markDirty(); setWorkout(p => ({...p, exercises: p.exercises.filter(e => e.id !== ex.id)})); }} className="text-gray-300 hover:text-red-400"><X size={20}/></button>
                  </div>
                  <div className="space-y-2">
                     {ex.sets.map((set, idx) => (
@@ -1109,7 +1190,33 @@ const WorkoutEditor: React.FC = () => {
       </div>
 
       <Modal isOpen={showExModal} onClose={() => setShowExModal(false)} title="Exercises">
-         <div className="space-y-2">{exerciseDefs.map(def => (<div key={def.id} onClick={() => addExercise(def.id)} className="p-4 bg-gray-50 hover:bg-gray-100 rounded-2xl flex justify-between items-center cursor-pointer transition-colors"><span className="font-bold text-gray-700">{def.name}</span><Plus size={18} className="text-gray-400" /></div>))}<Button className="w-full mt-4" onClick={() => setShowCreateExModal(true)}>Create New</Button></div>
+         <div className="space-y-2">{exerciseDefs.map(def => {
+            const isUsed = workouts.some(w => w.exercises.some(ex => ex.defId === def.id));
+            return (
+              <div key={def.id} onClick={() => addExercise(def.id)} className="p-4 bg-gray-50 hover:bg-gray-100 rounded-2xl flex justify-between items-center cursor-pointer transition-colors">
+                <span className="font-bold text-gray-700">{def.name}</span>
+                <div className="flex items-center gap-2">
+                  <Plus size={18} className="text-gray-400" />
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (isUsed) {
+                        alert('This exercise is used in existing workouts and can't be deleted yet.');
+                        return;
+                      }
+                      if (confirm(`Delete "${def.name}"?`)) {
+                        deleteExerciseDef(def.id);
+                      }
+                    }}
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all active:scale-95 ${isUsed ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-red-50 text-red-500 hover:bg-red-100'}`}
+                    aria-label="Delete exercise"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+            );
+          })}<Button className="w-full mt-4" onClick={() => setShowCreateExModal(true)}>Create New</Button></div>
       </Modal>
 
       <Modal isOpen={showCreateExModal} onClose={() => setShowCreateExModal(false)} title="New Exercise">
@@ -1149,17 +1256,17 @@ const BottomNav = () => {
 
   return (
       <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/90 backdrop-blur-md border-t border-gray-100 flex justify-around items-center py-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] z-50">
-        <Link to="/" className={`flex flex-col items-center gap-1 transition-colors ${isActive('/') ? 'text-cyan-400' : 'text-gray-300 hover:text-gray-500'}`}>
+        <Link to="/" className={`flex flex-col items-center gap-1 transition-colors ${isActive('/') ? 'text-gray-900' : 'text-gray-300 hover:text-gray-500'}`}>
             <Home size={24} strokeWidth={isActive('/') ? 3 : 2} />
         </Link>
-        <Link to="/calendar" className={`flex flex-col items-center gap-1 transition-colors ${isActive('/calendar') ? 'text-cyan-400' : 'text-gray-300 hover:text-gray-500'}`}>
+        <Link to="/calendar" className={`flex flex-col items-center gap-1 transition-colors ${isActive('/calendar') ? 'text-gray-900' : 'text-gray-300 hover:text-gray-500'}`}>
             <CalendarIcon size={24} strokeWidth={isActive('/calendar') ? 3 : 2} />
         </Link>
         <div className="w-8"></div> 
-        <Link to="/history" className={`flex flex-col items-center gap-1 transition-colors ${isActive('/history') ? 'text-cyan-400' : 'text-gray-300 hover:text-gray-500'}`}>
+        <Link to="/history" className={`flex flex-col items-center gap-1 transition-colors ${isActive('/history') ? 'text-gray-900' : 'text-gray-300 hover:text-gray-500'}`}>
             <History size={24} strokeWidth={isActive('/history') ? 3 : 2} />
         </Link>
-        <Link to="/profile" className={`flex flex-col items-center gap-1 transition-colors ${isActive('/profile') ? 'text-cyan-400' : 'text-gray-300 hover:text-gray-500'}`}>
+        <Link to="/profile" className={`flex flex-col items-center gap-1 transition-colors ${isActive('/profile') ? 'text-gray-900' : 'text-gray-300 hover:text-gray-500'}`}>
             <User size={24} strokeWidth={isActive('/profile') ? 3 : 2} />
         </Link>
       </div>
