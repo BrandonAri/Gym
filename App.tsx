@@ -494,7 +494,7 @@ const Dashboard: React.FC = () => {
         </div>
       )}
 
-      <div className="fixed left-1/2 -translate-x-1/2 z-60 bottom-[calc(1.25rem+env(safe-area-inset-bottom))]">
+      <div className="fixed left-1/2 -translate-x-1/2 z-60 bottom-[calc(4.25rem+env(safe-area-inset-bottom))]">
          <button 
            onClick={() => navigate('/workout/new')}
            className="w-14 h-14 bg-gray-100 text-gray-900 rounded-full shadow-lg shadow-gray-200 flex items-center justify-center hover:bg-gray-200 active:scale-90 transition-all"
