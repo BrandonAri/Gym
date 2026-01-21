@@ -17,7 +17,14 @@ input, button, textarea, select {
 
 /* Keep scrolling feeling native */
 body {
+  overflow: hidden;
+}
+
+/* Only specific content regions should scroll */
+.scroll-area {
+  overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 /* Quick "pop" feedback for taps (used on bottom-nav + key buttons) */
@@ -26,6 +33,16 @@ body {
   35% { transform: scale(0.88); }
   70% { transform: scale(1.06); }
   100% { transform: scale(1); }
+}
+
+/* Apply a quick, satisfying pop on press */
+.pressable {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+.pressable:active {
+  animation: tap-pop 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .tap-pop {

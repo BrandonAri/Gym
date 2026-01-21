@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { getMediaFromDB } from '../services/utils';
 import { ImageOff, Loader2, Trash2, Copy } from 'lucide-react';
 
@@ -391,7 +392,7 @@ export const SwipeableItem: React.FC<{
 export const Button: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'danger' | 'ghost' }> = ({ 
   className = '', variant = 'primary', onClick, ...props 
 }) => {
-  const base = "px-6 py-3 rounded-2xl font-bold transition-all active:scale-95 flex items-center justify-center gap-2";
+  const base = "px-6 py-3 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 pressable";
   const variants = {
     // Warm "yellow" accent (amber) reads better than pure yellow on white and keeps contrast.
     primary: "bg-amber-400 text-gray-900 shadow-lg shadow-amber-100 hover:bg-amber-500",
@@ -411,26 +412,60 @@ export const Button: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & { 
   );
 };
 
-export const Modal: React.FC<{ isOpen: boolean; onClose: () => void; title: string; children: React.ReactNode }> = ({ 
-  isOpen, onClose, title, children 
+export const Modal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+  panelClassName?: string;
+  contentClassName?: string;
+  overlayClassName?: string;
+}> = ({
+  isOpen,
+  onClose,
+  title,
+  children,
+  panelClassName,
+  contentClassName,
+  overlayClassName,
 }) => {
   if (!isOpen) return null;
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md p-4 animate__animated animate__fadeIn" style={{ ['--animate-duration' as any]: '260ms' }}>
-      <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-sm overflow-hidden animate__animated animate__zoomIn" style={{ ['--animate-duration' as any]: '260ms' }}>
-        <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-white">
+
+  const overlay = (
+    <div
+      className={`fixed inset-0 z-[1000] flex items-center justify-center ${
+        overlayClassName ??
+        'bg-gradient-to-t from-black/40 via-black/25 to-black/10 backdrop-blur-sm'
+      } animate__animated animate__fadeIn`}
+      style={{ ['--animate-duration' as any]: '260ms' }}
+    >
+      <div
+        className={`bg-white rounded-[32px] shadow-2xl w-full max-w-md mx-4 animate__animated animate__zoomIn ${
+          panelClassName ?? ''
+        }`}
+        style={{ ['--animate-duration' as any]: '260ms' }}
+      >
+        <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-white rounded-t-[32px]">
           <h3 className="font-bold text-xl text-gray-900 tracking-tight">{title}</h3>
-          <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors">
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 active:scale-95 transition-all"
+            aria-label="Close"
+          >
             ✕
           </button>
         </div>
-        <div className="p-6 max-h-[85vh] overflow-y-auto">
+        <div className={contentClassName ?? 'p-6 max-h-[85vh] overflow-y-auto scroll-area'}>
           {children}
         </div>
       </div>
     </div>
   );
+
+  if (typeof document !== 'undefined') return createPortal(overlay, document.body);
+  return overlay;
 };
+
 
 export const Input: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label?: string }> = ({ label, className = '', ...props }) => (
   <div className="flex flex-col gap-2 mb-4">

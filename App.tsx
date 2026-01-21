@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { HashRouter, Routes, Route, Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { 
   Home, Calendar as CalendarIcon, History, User, Plus, 
@@ -10,6 +11,12 @@ import { Button, Modal, Input, useLongPress, MediaResolver, useSwipe, SwipeableI
 import { generateId, formatDate, getDisplayDate, parseLocalDate, processAndSaveMedia, getDayNumber, getMonthName, formatDuration, getMediaFromDB } from './services/utils';
 import { ExerciseDef, ExerciseInstance, UserProfile, Workout, Set } from './types';
 import { supabase, uploadMediaToSupabase } from './services/supabase';
+
+// --- Portals (fix z-index & iOS safe-area clipping) ---
+const Portal: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  if (typeof document === 'undefined') return <>{children}</>;
+  return createPortal(children, document.body);
+};
 
 // --- Context ---
 
@@ -279,14 +286,14 @@ const LoginView: React.FC = () => {
   
   if (isLoading) {
       return (
-          <div className="h-screen flex items-center justify-center bg-white">
+          <div className="h-full flex items-center justify-center bg-white">
               <Loader2 className="animate-spin text-amber-400" size={48} />
           </div>
       )
   }
 
   return (
-    <div className="h-screen flex flex-col justify-between bg-white px-8 py-12 animate__animated animate__fadeIn" style={{ ['--animate-duration' as any]: '400ms' }}>
+    <div className="h-full flex flex-col justify-between bg-white px-8 py-12 animate__animated animate__fadeIn" style={{ ['--animate-duration' as any]: '400ms' }}>
       <div className="mt-20">
          <h1 className="text-5xl font-black text-center leading-tight tracking-tight text-gray-900">
             Start tracking<br/>your first<br/>workout...
@@ -422,16 +429,20 @@ const Dashboard: React.FC = () => {
       }
   });
 
-  if (isLoading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin text-gray-300"/></div>;
+  if (isLoading) return <div className="h-full flex items-center justify-center"><Loader2 className="animate-spin text-gray-300"/></div>;
 
   return (
-    <div className="px-6 pt-8 pb-32 min-h-screen bg-white animate__animated animate__fadeIn" style={{ ['--animate-duration' as any]: '250ms' }}>
+    <div className="h-full bg-white flex flex-col overflow-hidden animate__animated animate__fadeIn" style={{ ['--animate-duration' as any]: '250ms' }}>
+      <div className="shrink-0 px-6 pt-8">
       <header className="flex justify-between items-center mb-8">
         <h1 className="text-4xl font-black text-gray-900 tracking-tight">Workout</h1>
         <button className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 active:bg-gray-200">
            <Menu size={20} />
         </button>
       </header>
+    </div>
+
+    <div className="flex-1 overflow-y-auto scroll-area px-6 pb-[calc(7.5rem+env(safe-area-inset-bottom))]">
 
       <div className="relative min-h-[240px]" {...stackSwipeHandlers}>
         {todaysActiveWorkouts.length > 0 ? (
@@ -493,9 +504,11 @@ const Dashboard: React.FC = () => {
            <WorkoutCard workout={lastWorkout} />
         </div>
       )}
+  </div>
 
       {/* Floating action button: keep it low (overlaps the bottom bar), but ensure it renders ABOVE the nav (z-50). */}
-      <div className="fixed left-1/2 -translate-x-1/2 z-[60] bottom-[calc(1.25rem+env(safe-area-inset-bottom))]">
+      <Portal>
+      <div className="fixed left-1/2 -translate-x-1/2 z-[1200] bottom-[calc(1.25rem+env(safe-area-inset-bottom))]">
 	         <button 
            onClick={() => navigate('/workout/new')}
 	           className="w-14 h-14 bg-amber-400 text-gray-900 rounded-full shadow-lg shadow-amber-200 flex items-center justify-center hover:bg-amber-500 active:scale-90 transition-all"
@@ -503,6 +516,7 @@ const Dashboard: React.FC = () => {
            <Plus size={28} />
          </button>
       </div>
+      </Portal>
 
       <Modal isOpen={copyModalOpen} onClose={() => setCopyModalOpen(false)} title="Copy Workout">
          <p className="mb-4 text-gray-600">Select a date to schedule this workout:</p>
@@ -610,13 +624,17 @@ const HistoryView = () => {
 
 
     return (
-        <div className="px-6 pt-8 pb-32 bg-white min-h-screen animate__animated animate__fadeIn" style={{ ['--animate-duration' as any]: '250ms' }}>
-            <header className="flex justify-between items-center mb-8">
+        <div className="h-full bg-white flex flex-col overflow-hidden animate__animated animate__fadeIn" style={{ ['--animate-duration' as any]: '250ms' }}>
+            <div className="shrink-0 px-6 pt-8">
+                <header className="flex justify-between items-center mb-8">
                 <h1 className="text-4xl font-black text-gray-900 tracking-tight">History</h1>
                 <button onClick={() => setIsFilterModalOpen(true)} className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${filterType !== 'all' ? 'bg-amber-400 text-white' : 'bg-gray-100 text-gray-600'}`}>
                     <Filter size={20} />
                 </button>
             </header>
+            </div>
+
+            <div className="flex-1 overflow-y-auto scroll-area px-6 pb-[calc(7.5rem+env(safe-area-inset-bottom))]">
             
             {filterType !== 'all' && (
                 <div className="flex items-center gap-2 mb-4 bg-gray-50 px-3 py-2 rounded-xl w-fit">
@@ -757,7 +775,8 @@ const CalendarView = () => {
 
 
    return (
-      <div className="px-6 pt-8 pb-32 bg-white min-h-screen animate__animated animate__fadeIn" style={{ ['--animate-duration' as any]: '250ms' }}>
+      <div className="h-full bg-white flex flex-col overflow-hidden animate__animated animate__fadeIn" style={{ ['--animate-duration' as any]: '250ms' }}>
+         <div className="shrink-0 px-6 pt-8 pb-4">
          <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-8">Calendar</h1>
          <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold text-gray-900">{currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</h2>
@@ -782,6 +801,9 @@ const CalendarView = () => {
                 );
             })}
          </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto scroll-area px-6 pb-[calc(7.5rem+env(safe-area-inset-bottom))]">
          <div>
             <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">{selectedDayWorkouts.length > 0 ? getDisplayDate(selectedDayWorkouts[0].date) : "Select a day"}</h3>
             <div className="space-y-4">
@@ -791,6 +813,8 @@ const CalendarView = () => {
                 ))}
             </div>
          </div>
+      </div>
+
          <ActionMenu isOpen={actionMenuOpen} onClose={() => setActionMenuOpen(false)} onCopy={() => { setTargetDate(today); setCopyModalOpen(true); }} onDelete={() => setDeleteModalOpen(true)} />
          <Modal isOpen={deleteModalOpen} onClose={() => setDeleteModalOpen(false)} title="Delete Workout"><div className="text-center"><div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4"><Trash2 size={32} /></div><p className="mb-6 text-gray-600">Are you sure you want to delete this workout?</p><Button variant="danger" className="w-full mb-3" onClick={confirmDelete}>Yes, Delete</Button><Button variant="secondary" className="w-full" onClick={() => setDeleteModalOpen(false)}>Cancel</Button></div></Modal>
          <Modal isOpen={copyModalOpen} onClose={() => setCopyModalOpen(false)} title="Copy Workout"><p className="mb-4 text-gray-600">Select a date to schedule this workout:</p><Input type="date" value={targetDate} min={today} onChange={(e) => setTargetDate(e.target.value)} /><Button className="w-full mb-3" onClick={confirmCopy}>Schedule</Button><Button variant="secondary" className="w-full" onClick={() => setCopyModalOpen(false)}>Cancel</Button></Modal>
@@ -801,7 +825,7 @@ const CalendarView = () => {
 const ProfileView = () => {
     const { user, logout, toggleUnit } = useContext(GymContext);
     return (
-        <div className="px-6 pt-8 pb-32 bg-white min-h-screen animate__animated animate__fadeIn" style={{ ['--animate-duration' as any]: '250ms' }}>
+        <div className="h-full bg-white overflow-hidden px-6 pt-8 pb-[calc(7.5rem+env(safe-area-inset-bottom))] animate__animated animate__fadeIn" style={{ ['--animate-duration' as any]: '250ms' }}>
             <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-8">Me</h1>
             <div className="flex flex-col items-center mb-10">
                 <div className="p-1 rounded-full border-2 border-amber-400 mb-4"><img src={user?.photoUrl} alt="Profile" className="w-24 h-24 rounded-full border-4 border-white" /></div>
@@ -1330,7 +1354,7 @@ const WorkoutEditor: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-white animate__animated animate__fadeIn" style={{ ['--animate-duration' as any]: '220ms' }}>
+    <div className="flex flex-col h-full bg-white animate__animated animate__fadeIn" style={{ ['--animate-duration' as any]: '220ms' }}>
       <div className="bg-white/80 backdrop-blur-md px-4 py-3 flex items-center justify-between sticky top-0 z-20 border-b border-gray-100 shadow-sm">
         <button onClick={handleSaveBack} className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-gray-600 active:scale-95 transition-transform"><ArrowLeft size={20}/></button>
         <div className="flex flex-col items-center" onClick={toggleTimer}>
@@ -1438,7 +1462,7 @@ const WorkoutEditor: React.FC = () => {
          <Button onClick={handleCreateExercise} disabled={isProcessing} className="w-full">{isProcessing ? 'Processing...' : 'Save'}</Button>
       </Modal>
 
-      <Modal isOpen={showReport} onClose={handleExitReport} title="Session Report">
+      <Modal isOpen={showReport} onClose={handleExitReport} title="Session Report" panelClassName="max-w-sm w-[92%] max-h-[72vh]" contentClassName="p-6 overflow-hidden">
 	          <div className="flex flex-col items-center text-center">
 	            <div className="w-20 h-20 rounded-full bg-amber-50 flex items-center justify-center text-amber-500 mb-4 ring-8 ring-amber-50/50">
 	              <Check size={40} strokeWidth={4} />
@@ -1477,6 +1501,141 @@ const WorkoutEditor: React.FC = () => {
   );
 };
 
+
+
+// --- Install hint & orientation lock ---
+
+const isStandaloneMode = () => {
+  if (typeof window === 'undefined') return true;
+  const mm = window.matchMedia?.('(display-mode: standalone)');
+  const standalone = (mm && mm.matches) || (navigator as any).standalone;
+  return !!standalone;
+};
+
+const isIOSDevice = () => {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent || '';
+  const iOS = /iPad|iPhone|iPod/i.test(ua);
+  const iPadOS = ua.includes('Mac') && typeof document !== 'undefined' && 'ontouchend' in document;
+  return iOS || iPadOS;
+};
+
+const InstallHint: React.FC = () => {
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (localStorage.getItem('ironlog_install_hint_dismissed_v1') === '1') return;
+    } catch {
+      // ignore
+    }
+
+    if (isStandaloneMode()) return;
+
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(ua);
+    if (!isMobile) return;
+
+    const t = window.setTimeout(() => setOpen(true), 900);
+    return () => window.clearTimeout(t);
+  }, []);
+
+  const dismiss = (dontShowAgain: boolean) => {
+    if (dontShowAgain) {
+      try {
+        localStorage.setItem('ironlog_install_hint_dismissed_v1', '1');
+      } catch {
+        // ignore
+      }
+    }
+    setOpen(false);
+  };
+
+  return (
+    <Modal
+      isOpen={open}
+      onClose={() => dismiss(true)}
+      title="Install IronLog"
+      panelClassName="max-w-sm w-[92%]"
+      contentClassName="p-6"
+    >
+      <p className="text-sm text-gray-700 leading-relaxed">
+        This is a web app. Installing it to your Home Screen makes it feel faster and more like a real app.
+      </p>
+
+      {isIOSDevice() ? (
+        <ol className="mt-4 space-y-2 text-sm text-gray-800 list-decimal list-inside">
+          <li>Open the Share menu (the square with an arrow) in Safari.</li>
+          <li>Tap <span className="font-semibold">Add to Home Screen</span>.</li>
+          <li>Tap <span className="font-semibold">Add</span>.</li>
+        </ol>
+      ) : (
+        <ol className="mt-4 space-y-2 text-sm text-gray-800 list-decimal list-inside">
+          <li>Tap the browser menu (⋮).</li>
+          <li>Tap <span className="font-semibold">Install app</span> / <span className="font-semibold">Add to Home screen</span>.</li>
+        </ol>
+      )}
+
+      <div className="mt-6 flex gap-3">
+        <Button
+          onClick={() => dismiss(false)}
+          className="flex-1 bg-amber-400 hover:bg-amber-500 text-black"
+        >
+          Not now
+        </Button>
+        <Button
+          onClick={() => dismiss(true)}
+          className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900"
+        >
+          Don&apos;t show again
+        </Button>
+      </div>
+    </Modal>
+  );
+};
+
+const OrientationLockOverlay: React.FC = () => {
+  const [isLandscape, setIsLandscape] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+
+    const mql = window.matchMedia('(orientation: landscape)');
+    const update = () => setIsLandscape(!!mql.matches);
+
+    update();
+
+    // Safari iOS support
+    if (typeof mql.addEventListener === 'function') {
+      mql.addEventListener('change', update);
+      return () => mql.removeEventListener('change', update);
+    }
+
+    // @ts-expect-error older API
+    mql.addListener(update);
+    // @ts-expect-error older API
+    return () => mql.removeListener(update);
+  }, []);
+
+  if (!isLandscape) return null;
+
+  return (
+    <Portal>
+      <div className="fixed inset-0 z-[2000] bg-white flex items-center justify-center p-10 text-center">
+        <div className="max-w-xs">
+          <div className="mx-auto mb-4 w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center">
+            <RotateCcw className="text-gray-900" size={28} />
+          </div>
+          <div className="text-xl font-extrabold text-gray-900">Rotate to portrait</div>
+          <div className="mt-2 text-sm text-gray-600 leading-relaxed">
+            IronLog is designed for vertical use. Rotate your phone back to continue.
+          </div>
+        </div>
+      </div>
+    </Portal>
+  );
+};
+
 const BottomNav = () => {
   const location = useLocation();
   const isActive = (path: string) => location.pathname === path;
@@ -1493,14 +1652,14 @@ const BottomNav = () => {
         <Link
           to="/"
           onClick={() => pop('/')}
-          className={`flex flex-col items-center gap-1 transition-all active:scale-90 ${isActive('/') ? 'text-gray-900' : 'text-gray-300 hover:text-gray-500'} ${popped === '/' ? 'tap-pop' : ''}`}
+          className={`pressable flex flex-col items-center gap-1 transition-all active:scale-90 ${isActive('/') ? 'text-gray-900' : 'text-gray-300 hover:text-gray-500'} ${popped === '/' ? 'tap-pop' : ''}`}
         >
             <Home size={24} strokeWidth={isActive('/') ? 3 : 2} />
         </Link>
         <Link
           to="/calendar"
           onClick={() => pop('/calendar')}
-          className={`flex flex-col items-center gap-1 transition-all active:scale-90 ${isActive('/calendar') ? 'text-gray-900' : 'text-gray-300 hover:text-gray-500'} ${popped === '/calendar' ? 'tap-pop' : ''}`}
+          className={`pressable flex flex-col items-center gap-1 transition-all active:scale-90 ${isActive('/calendar') ? 'text-gray-900' : 'text-gray-300 hover:text-gray-500'} ${popped === '/calendar' ? 'tap-pop' : ''}`}
         >
             <CalendarIcon size={24} strokeWidth={isActive('/calendar') ? 3 : 2} />
         </Link>
@@ -1508,14 +1667,14 @@ const BottomNav = () => {
         <Link
           to="/history"
           onClick={() => pop('/history')}
-          className={`flex flex-col items-center gap-1 transition-all active:scale-90 ${isActive('/history') ? 'text-gray-900' : 'text-gray-300 hover:text-gray-500'} ${popped === '/history' ? 'tap-pop' : ''}`}
+          className={`pressable flex flex-col items-center gap-1 transition-all active:scale-90 ${isActive('/history') ? 'text-gray-900' : 'text-gray-300 hover:text-gray-500'} ${popped === '/history' ? 'tap-pop' : ''}`}
         >
             <History size={24} strokeWidth={isActive('/history') ? 3 : 2} />
         </Link>
         <Link
           to="/profile"
           onClick={() => pop('/profile')}
-          className={`flex flex-col items-center gap-1 transition-all active:scale-90 ${isActive('/profile') ? 'text-gray-900' : 'text-gray-300 hover:text-gray-500'} ${popped === '/profile' ? 'tap-pop' : ''}`}
+          className={`pressable flex flex-col items-center gap-1 transition-all active:scale-90 ${isActive('/profile') ? 'text-gray-900' : 'text-gray-300 hover:text-gray-500'} ${popped === '/profile' ? 'tap-pop' : ''}`}
         >
             <User size={24} strokeWidth={isActive('/profile') ? 3 : 2} />
         </Link>
@@ -1527,7 +1686,9 @@ const AppContent = () => {
   const { user } = useContext(GymContext);
   if (!user) return <LoginView />;
   return (
-    <div className="max-w-md mx-auto min-h-screen bg-white relative shadow-2xl overflow-hidden">
+    <div className="max-w-md mx-auto h-[100dvh] bg-white relative shadow-2xl overflow-hidden">
+      <OrientationLockOverlay />
+      <InstallHint />
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/calendar" element={<CalendarView />} />
