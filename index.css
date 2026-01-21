@@ -19,3 +19,26 @@ input, button, textarea, select {
 body {
   -webkit-overflow-scrolling: touch;
 }
+
+/* Quick "pop" feedback for taps (used on bottom-nav + key buttons) */
+@keyframes tap-pop {
+  0% { transform: scale(1); }
+  35% { transform: scale(0.88); }
+  70% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+.tap-pop {
+  animation: tap-pop 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* "Score" reveal used in the session report */
+@keyframes score-pop {
+  0% { transform: scale(0.94); opacity: 0.0; }
+  55% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.score-pop {
+  animation: score-pop 360ms cubic-bezier(0.2, 0.9, 0.2, 1);
+}

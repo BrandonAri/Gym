@@ -393,7 +393,8 @@ export const Button: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & { 
 }) => {
   const base = "px-6 py-3 rounded-2xl font-bold transition-all active:scale-95 flex items-center justify-center gap-2";
   const variants = {
-    primary: "bg-cyan-400 text-white shadow-lg shadow-cyan-100 hover:bg-cyan-500",
+    // Warm "yellow" accent (amber) reads better than pure yellow on white and keeps contrast.
+    primary: "bg-amber-400 text-gray-900 shadow-lg shadow-amber-100 hover:bg-amber-500",
     secondary: "bg-gray-100 text-gray-900 hover:bg-gray-200",
     danger: "bg-red-50 text-red-500 hover:bg-red-100",
     ghost: "bg-transparent text-gray-500 hover:bg-gray-50"
@@ -434,6 +435,6 @@ export const Modal: React.FC<{ isOpen: boolean; onClose: () => void; title: stri
 export const Input: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label?: string }> = ({ label, className = '', ...props }) => (
   <div className="flex flex-col gap-2 mb-4">
     {label && <label className="text-sm font-semibold text-gray-500 ml-1">{label}</label>}
-    <input className={`bg-gray-50 border-none rounded-2xl px-4 py-3 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-cyan-200 outline-none transition-all ${className}`} {...props} />
+    <input className={`bg-gray-50 border-none rounded-2xl px-4 py-3 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-amber-200 outline-none transition-all ${className}`} {...props} />
   </div>
 );

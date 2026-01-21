@@ -280,7 +280,7 @@ const LoginView: React.FC = () => {
   if (isLoading) {
       return (
           <div className="h-screen flex items-center justify-center bg-white">
-              <Loader2 className="animate-spin text-cyan-400" size={48} />
+              <Loader2 className="animate-spin text-amber-400" size={48} />
           </div>
       )
   }
@@ -296,7 +296,7 @@ const LoginView: React.FC = () => {
       <div className="flex flex-col items-center w-full">
          <div className="mb-10 w-full flex flex-col items-center">
             <div className="flex gap-2 justify-center mb-6">
-               <div className="flex items-center text-cyan-400">
+               <div className="flex items-center text-amber-400">
                   <User size={32} />
                   <User size={32} className="-ml-2 opacity-60" />
                </div>
@@ -308,7 +308,7 @@ const LoginView: React.FC = () => {
          
          <button 
            onClick={login}
-           className="w-full bg-cyan-400 text-white py-4 rounded-2xl font-bold text-lg shadow-xl shadow-cyan-100 active:scale-95 transition-all hover:bg-cyan-500"
+           className="w-full bg-amber-400 text-white py-4 rounded-2xl font-bold text-lg shadow-xl shadow-amber-100 active:scale-95 transition-all hover:bg-amber-500"
          >
            Continue with Google
          </button>
@@ -470,7 +470,7 @@ const Dashboard: React.FC = () => {
                         {todaysActiveWorkouts.length > 1 && (
                             <div className="absolute -bottom-6 left-0 w-full flex justify-center gap-2">
                                 {todaysActiveWorkouts.map((_, i) => (
-                                    <div key={i} className={`w-2 h-2 rounded-full ${i === topCardIndex ? 'bg-cyan-500' : 'bg-gray-300'}`} />
+                                    <div key={i} className={`w-2 h-2 rounded-full ${i === topCardIndex ? 'bg-amber-500' : 'bg-gray-300'}`} />
                                 ))}
                             </div>
                         )}
@@ -494,10 +494,11 @@ const Dashboard: React.FC = () => {
         </div>
       )}
 
-      <div className="fixed left-1/2 -translate-x-1/2 z-60 bottom-[calc(4.25rem+env(safe-area-inset-bottom))]">
-         <button 
+      {/* Floating action button: keep it low (overlaps the bottom bar), but ensure it renders ABOVE the nav (z-50). */}
+      <div className="fixed left-1/2 -translate-x-1/2 z-[60] bottom-[calc(1.25rem+env(safe-area-inset-bottom))]">
+	         <button 
            onClick={() => navigate('/workout/new')}
-           className="w-14 h-14 bg-gray-100 text-gray-900 rounded-full shadow-lg shadow-gray-200 flex items-center justify-center hover:bg-gray-200 active:scale-90 transition-all"
+	           className="w-14 h-14 bg-amber-400 text-gray-900 rounded-full shadow-lg shadow-amber-200 flex items-center justify-center hover:bg-amber-500 active:scale-90 transition-all"
          >
            <Plus size={28} />
          </button>
@@ -572,7 +573,7 @@ const HistoryView = () => {
                     <div className="w-12 h-1 bg-gray-200 rounded-full mx-auto mb-6"></div>
                     <h3 className="font-bold text-xl text-gray-900 mb-6 text-center">Workout Options</h3>
                     <div className="space-y-3">
-                        <Button onClick={() => { onCopy(); onClose(); }} className="w-full bg-cyan-50 text-cyan-600 shadow-none hover:bg-cyan-100 justify-start">
+                        <Button onClick={() => { onCopy(); onClose(); }} className="w-full bg-amber-50 text-amber-700 shadow-none hover:bg-amber-100 justify-start">
                             <Copy size={20} /> Schedule Copy
                         </Button>
                         <Button onClick={() => { onDelete(); onClose(); }} variant="danger" className="w-full justify-start bg-red-50 text-red-500 shadow-none hover:bg-red-100">
@@ -596,7 +597,7 @@ const HistoryView = () => {
         return (
             <div {...longPress} className="bg-white p-5 rounded-3xl shadow-lg shadow-gray-100 border border-gray-50 flex justify-between items-center active:scale-[0.99] transition-transform cursor-pointer select-none">
                 <div className="flex items-center gap-4">
-                    <div className="bg-cyan-50 text-cyan-500 w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-lg">{getDayNumber(workout.date)}</div>
+                    <div className="bg-amber-50 text-amber-500 w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-lg">{getDayNumber(workout.date)}</div>
                     <div>
                         <h3 className="font-bold text-gray-900 text-lg">{workout.title}</h3>
                         <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">{getMonthName(workout.date)} • {workout.exercises.length} Exercises {workout.completed && <span className="ml-2 text-green-500">✓ Done</span>}</p>
@@ -612,7 +613,7 @@ const HistoryView = () => {
         <div className="px-6 pt-8 pb-32 bg-white min-h-screen animate__animated animate__fadeIn" style={{ ['--animate-duration' as any]: '250ms' }}>
             <header className="flex justify-between items-center mb-8">
                 <h1 className="text-4xl font-black text-gray-900 tracking-tight">History</h1>
-                <button onClick={() => setIsFilterModalOpen(true)} className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${filterType !== 'all' ? 'bg-cyan-400 text-white' : 'bg-gray-100 text-gray-600'}`}>
+                <button onClick={() => setIsFilterModalOpen(true)} className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${filterType !== 'all' ? 'bg-amber-400 text-white' : 'bg-gray-100 text-gray-600'}`}>
                     <Filter size={20} />
                 </button>
             </header>
@@ -659,7 +660,7 @@ const HistoryView = () => {
                     <div className="space-y-2">
                        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">By Name</label>
                        <div className="flex gap-2">
-                          <input placeholder="Chest, Leg Day..." className="bg-gray-50 flex-1 px-4 py-3 rounded-2xl outline-none border border-transparent focus:border-cyan-200" onChange={(e) => setFilterValue(e.target.value)} />
+                          <input placeholder="Chest, Leg Day..." className="bg-gray-50 flex-1 px-4 py-3 rounded-2xl outline-none border border-transparent focus:border-amber-200" onChange={(e) => setFilterValue(e.target.value)} />
                           <Button onClick={(e) => { const input = (e.currentTarget.previousSibling as HTMLInputElement).value; if(input) applyFilter('name', input); }} className="px-4 py-0 rounded-2xl">Go</Button>
                        </div>
                     </div>
@@ -729,7 +730,7 @@ const CalendarView = () => {
                     <div className="w-12 h-1 bg-gray-200 rounded-full mx-auto mb-6"></div>
                     <h3 className="font-bold text-xl text-gray-900 mb-6 text-center">Workout Options</h3>
                     <div className="space-y-3">
-                        <Button onClick={() => { onCopy(); onClose(); }} className="w-full bg-cyan-50 text-cyan-600 shadow-none hover:bg-cyan-100 justify-start"><Copy size={20} /> Schedule Copy</Button>
+                        <Button onClick={() => { onCopy(); onClose(); }} className="w-full bg-amber-50 text-amber-700 shadow-none hover:bg-amber-100 justify-start"><Copy size={20} /> Schedule Copy</Button>
                         <Button onClick={() => { onDelete(); onClose(); }} variant="danger" className="w-full justify-start bg-red-50 text-red-500 shadow-none hover:bg-red-100"><Trash2 size={20} /> Delete Workout</Button>
                         <div className="h-4"></div>
                         <Button onClick={onClose} variant="secondary" className="w-full">Cancel</Button>
@@ -774,9 +775,9 @@ const CalendarView = () => {
                 const isSelected = selectedDayWorkouts.length > 0 && getDayNumber(selectedDayWorkouts[0].date) === day && parseLocalDate(selectedDayWorkouts[0].date).getMonth() === month;
                 const isToday = day === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear();
                 return (
-                    <div key={day} onClick={() => handleDayClick(day)} className={`aspect-square rounded-2xl flex flex-col items-center justify-center relative cursor-pointer transition-all active:scale-95 ${isSelected ? 'bg-cyan-400 text-white shadow-lg shadow-cyan-200' : isToday ? 'bg-gray-100 text-gray-900 font-bold' : 'bg-transparent text-gray-700 hover:bg-gray-50'}`}>
+                    <div key={day} onClick={() => handleDayClick(day)} className={`aspect-square rounded-2xl flex flex-col items-center justify-center relative cursor-pointer transition-all active:scale-95 ${isSelected ? 'bg-amber-400 text-white shadow-lg shadow-amber-200' : isToday ? 'bg-gray-100 text-gray-900 font-bold' : 'bg-transparent text-gray-700 hover:bg-gray-50'}`}>
                         <span className="text-sm">{day}</span>
-                        {dayWorkouts.length > 0 && (<div className="flex gap-1 mt-1">{dayWorkouts.slice(0, 3).map((_, idx) => (<div key={idx} className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-cyan-400'}`}></div>))}</div>)}
+                        {dayWorkouts.length > 0 && (<div className="flex gap-1 mt-1">{dayWorkouts.slice(0, 3).map((_, idx) => (<div key={idx} className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-amber-400'}`}></div>))}</div>)}
                     </div>
                 );
             })}
@@ -803,7 +804,7 @@ const ProfileView = () => {
         <div className="px-6 pt-8 pb-32 bg-white min-h-screen animate__animated animate__fadeIn" style={{ ['--animate-duration' as any]: '250ms' }}>
             <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-8">Me</h1>
             <div className="flex flex-col items-center mb-10">
-                <div className="p-1 rounded-full border-2 border-cyan-400 mb-4"><img src={user?.photoUrl} alt="Profile" className="w-24 h-24 rounded-full border-4 border-white" /></div>
+                <div className="p-1 rounded-full border-2 border-amber-400 mb-4"><img src={user?.photoUrl} alt="Profile" className="w-24 h-24 rounded-full border-4 border-white" /></div>
                 <h2 className="text-2xl font-bold text-gray-900">{user?.name}</h2>
                 <p className="text-gray-400 text-sm">{user?.email}</p>
             </div>
@@ -1116,10 +1117,217 @@ const WorkoutEditor: React.FC = () => {
       }
   };
 
-  const totalVolume = workout.exercises.reduce((acc, ex) => acc + ex.sets.reduce((sAcc, s) => s.completed ? sAcc + (s.weight * s.reps) : sAcc, 0), 0);
+  // Total volume: count *all* sets (not only checked ones). Users often forget to check every set, but still
+  // expect the session report to reflect the work they logged.
+  const totalVolume = workout.exercises.reduce(
+    (acc, ex) => acc + ex.sets.reduce((sAcc, s) => sAcc + (s.weight * s.reps), 0),
+    0
+  );
   const totalSets = workout.exercises.reduce((acc, ex) => acc + ex.sets.length, 0);
   const completedSets = workout.exercises.reduce((acc, ex) => acc + ex.sets.filter(s => s.completed).length, 0);
   const percentage = totalSets > 0 ? Math.round((completedSets / totalSets) * 100) : 0;
+
+  const durationMinutes = Math.max(0, Math.round(currentTime / 60));
+
+  const [animMinutes, setAnimMinutes] = useState(0);
+  const [animCompletion, setAnimCompletion] = useState(0);
+  const [animVolume, setAnimVolume] = useState(0);
+  const reportShownOnceRef = useRef(false);
+
+  const animateNumber = (to: number, setter: (v: number) => void, durationMs: number) => {
+    const from = 0;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / durationMs);
+      // easeOutCubic
+      const eased = 1 - Math.pow(1 - t, 3);
+      const value = Math.round(from + (to - from) * eased);
+      setter(value);
+      if (t < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  };
+
+  useEffect(() => {
+    if (!showReport) {
+      reportShownOnceRef.current = false;
+      return;
+    }
+    if (reportShownOnceRef.current) return;
+    reportShownOnceRef.current = true;
+
+    setAnimMinutes(0);
+    setAnimCompletion(0);
+    setAnimVolume(0);
+
+    animateNumber(durationMinutes, setAnimMinutes, 700);
+    animateNumber(percentage, setAnimCompletion, 900);
+    animateNumber(Math.round(totalVolume), setAnimVolume, 1100);
+  }, [showReport, durationMinutes, percentage, totalVolume]);
+
+  const handleShareReport = async () => {
+    try {
+      const W = 1080;
+      const H = 1350;
+      const canvas = document.createElement('canvas');
+      canvas.width = W;
+      canvas.height = H;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Canvas not supported');
+
+	      const roundRect = (
+	        c: CanvasRenderingContext2D,
+	        x: number,
+	        y: number,
+	        w: number,
+	        h: number,
+	        r: number
+	      ) => {
+	        const radius = Math.max(0, Math.min(r, w / 2, h / 2));
+	        c.beginPath();
+	        c.moveTo(x + radius, y);
+	        c.arcTo(x + w, y, x + w, y + h, radius);
+	        c.arcTo(x + w, y + h, x, y + h, radius);
+	        c.arcTo(x, y + h, x, y, radius);
+	        c.arcTo(x, y, x + w, y, radius);
+	        c.closePath();
+	      };
+
+      // Background
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, W, H);
+
+      // Header band
+      ctx.fillStyle = '#FFFBEB'; // amber-50
+      ctx.fillRect(0, 0, W, 240);
+      ctx.fillStyle = '#111827'; // gray-900
+      ctx.font = '900 64px -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial';
+      ctx.fillText('IronLog', 72, 110);
+      ctx.font = '800 42px -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial';
+      const title = (workout.title || 'Workout').slice(0, 28);
+      ctx.fillText(title, 72, 180);
+      ctx.font = '600 28px -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial';
+      ctx.fillStyle = '#6B7280'; // gray-500
+      ctx.fillText(workout.date, 72, 220);
+
+      // Summary cards
+      const cardY = 280;
+      const cardH = 150;
+      const gap = 24;
+      const cardW = (W - 72 * 2 - gap) / 2;
+
+      const drawCard = (x: number, y: number, label: string, value: string) => {
+        ctx.fillStyle = '#F9FAFB'; // gray-50
+        roundRect(ctx, x, y, cardW, cardH, 28);
+        ctx.fill();
+        ctx.fillStyle = '#9CA3AF';
+        ctx.font = '800 22px -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial';
+        ctx.fillText(label.toUpperCase(), x + 26, y + 42);
+        ctx.fillStyle = '#111827';
+        ctx.font = '900 48px -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial';
+        ctx.fillText(value, x + 26, y + 106);
+      };
+
+      drawCard(72, cardY, 'Duration', `${durationMinutes} min`);
+      drawCard(72 + cardW + gap, cardY, 'Completion', `${percentage}%`);
+      // Full-width volume card
+      ctx.fillStyle = '#F9FAFB';
+      roundRect(ctx, 72, cardY + cardH + gap, W - 144, cardH, 28);
+      ctx.fill();
+      ctx.fillStyle = '#9CA3AF';
+      ctx.font = '800 22px -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial';
+      ctx.fillText('TOTAL VOLUME', 72 + 26, cardY + cardH + gap + 42);
+      ctx.fillStyle = '#111827';
+      ctx.font = '900 56px -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial';
+      ctx.fillText(`${Math.round(totalVolume)} ${currentUnit}`, 72 + 26, cardY + cardH + gap + 112);
+
+      // Details
+      let y = 690;
+      ctx.fillStyle = '#111827';
+      ctx.font = '900 28px -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial';
+      ctx.fillText('Exercises', 72, y);
+      y += 24;
+      ctx.strokeStyle = '#E5E7EB';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(72, y);
+      ctx.lineTo(W - 72, y);
+      ctx.stroke();
+      y += 26;
+
+      ctx.font = '700 26px -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial';
+      ctx.fillStyle = '#111827';
+
+      for (const ex of workout.exercises) {
+        const def = exerciseDefs.find(d => d.id === ex.defId);
+        const name = (def?.name || 'Exercise').slice(0, 34);
+        ctx.fillText(name, 72, y);
+        y += 34;
+
+        ctx.fillStyle = '#6B7280';
+        ctx.font = '600 22px -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial';
+        const line = ex.sets
+          .map((s, idx) => `${idx + 1}) ${s.weight}×${s.reps}${s.completed ? ' ✓' : ''}`)
+          .join('   ');
+
+        // simple wrapping
+        const maxWidth = W - 144;
+        const words = line.split(' ');
+        let current = '';
+        for (const w of words) {
+          const next = current ? `${current} ${w}` : w;
+          if (ctx.measureText(next).width > maxWidth) {
+            ctx.fillText(current, 72, y);
+            y += 28;
+            current = w;
+          } else {
+            current = next;
+          }
+        }
+        if (current) {
+          ctx.fillText(current, 72, y);
+          y += 32;
+        }
+
+        ctx.fillStyle = '#E5E7EB';
+        ctx.beginPath();
+        ctx.moveTo(72, y);
+        ctx.lineTo(W - 72, y);
+        ctx.stroke();
+        y += 30;
+
+        if (y > H - 80) break; // don't overflow
+
+        ctx.fillStyle = '#111827';
+        ctx.font = '700 26px -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial';
+      }
+
+      const blob: Blob | null = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+      if (!blob) throw new Error('Failed to generate image');
+      const file = new File([blob], `ironlog-${workout.date}.png`, { type: 'image/png' });
+
+      const canShareFiles = typeof navigator !== 'undefined' && (navigator as any).canShare?.({ files: [file] });
+      if (canShareFiles && (navigator as any).share) {
+        await (navigator as any).share({
+          title: `Workout • ${workout.date}`,
+          text: `${workout.title || 'Workout'} — ${durationMinutes} min • ${Math.round(totalVolume)} ${currentUnit}`,
+          files: [file]
+        });
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ironlog-${workout.date}.png`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      }
+    } catch (e: any) {
+      console.error(e);
+      alert(e?.message || 'Share failed');
+    }
+  };
 
   return (
     <div className="flex flex-col h-screen bg-white animate__animated animate__fadeIn" style={{ ['--animate-duration' as any]: '220ms' }}>
@@ -1131,7 +1339,7 @@ const WorkoutEditor: React.FC = () => {
         </div>
         <div className="flex gap-2">
             {!workout.completed && (<button onClick={toggleTimer} className={`w-10 h-10 rounded-full flex items-center justify-center text-white active:scale-95 transition-all ${workout.startTimestamp ? 'bg-amber-400 shadow-amber-200' : 'bg-green-400 shadow-green-200'} shadow-lg`}>{workout.startTimestamp ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" className="ml-0.5"/>}</button>)}
-            <button onClick={handleFinish} className={`w-10 h-10 rounded-full flex items-center justify-center text-white shadow-lg active:scale-95 transition-all ${workout.completed ? 'bg-gray-300' : 'bg-cyan-400 shadow-cyan-200'}`}><Check size={20} strokeWidth={3} /></button>
+            <button onClick={handleFinish} className={`w-10 h-10 rounded-full flex items-center justify-center text-white shadow-lg active:scale-95 transition-all ${workout.completed ? 'bg-gray-300' : 'bg-amber-400 shadow-amber-200'}`}><Check size={20} strokeWidth={3} /></button>
         </div>
       </div>
 
@@ -1173,14 +1381,14 @@ const WorkoutEditor: React.FC = () => {
                              />
                              <span className="text-xs text-gray-400 font-medium">REPS</span>
                           </div>
-                          <button onClick={() => updateSet(ex.id, set.id, 'completed', !set.completed)} className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${set.completed ? 'bg-cyan-400 text-white shadow-lg shadow-cyan-200' : 'bg-gray-100 text-gray-300'}`}><Check size={16} /></button>
+                          <button onClick={() => updateSet(ex.id, set.id, 'completed', !set.completed)} className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${set.completed ? 'bg-amber-400 text-white shadow-lg shadow-amber-200' : 'bg-gray-100 text-gray-300'}`}><Check size={16} /></button>
                           <button onClick={() => deleteSet(ex.id, set.id)} className="w-9 h-9 rounded-xl flex items-center justify-center bg-gray-100 text-gray-300 hover:text-red-400 transition-all active:scale-95" aria-label="Delete set">
                             <Trash2 size={16} />
                           </button>
                        </div>
                     ))}
                  </div>
-                 <button onClick={() => addSet(ex.id)} className="w-full mt-3 py-2 text-sm font-bold text-cyan-500 bg-cyan-50 rounded-xl hover:bg-cyan-100 transition-colors">+ Add Set</button>
+                 <button onClick={() => addSet(ex.id)} className="w-full mt-3 py-2 text-sm font-bold text-amber-500 bg-amber-50 rounded-xl hover:bg-amber-100 transition-colors">+ Add Set</button>
               </div>
             );
           })}
@@ -1231,18 +1439,39 @@ const WorkoutEditor: React.FC = () => {
       </Modal>
 
       <Modal isOpen={showReport} onClose={handleExitReport} title="Session Report">
-          <div className="flex flex-col items-center text-center">
-             <div className="w-24 h-24 rounded-full bg-cyan-50 flex items-center justify-center text-cyan-500 mb-4 ring-8 ring-cyan-50/50"><Check size={48} strokeWidth={4} /></div>
-             <h2 className="text-2xl font-black text-gray-900 mb-1">Great Job!</h2>
-             <p className="text-gray-400 text-sm mb-6">Workout Completed</p>
-             <div className="grid grid-cols-2 w-full gap-4 mb-8">
-                <div className="bg-gray-50 p-4 rounded-2xl"><p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Duration</p><p className="text-xl font-black text-gray-900 mt-1">{formatDuration(currentTime)}</p></div>
-                <div className="bg-gray-50 p-4 rounded-2xl"><p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Completion</p><p className="text-xl font-black text-gray-900 mt-1">{percentage}%</p></div>
-                <div className="bg-gray-50 p-4 rounded-2xl col-span-2"><p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Total Volume</p><p className="text-xl font-black text-gray-900 mt-1">{totalVolume} {currentUnit}</p></div>
-             </div>
-             <div className="w-full text-left mb-6 max-h-40 overflow-y-auto"><p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Exercises</p>{workout.exercises.map(ex => { const def = exerciseDefs.find(d => d.id === ex.defId); const vol = ex.sets.reduce((a, s) => s.completed ? a + (s.weight * s.reps) : a, 0); return (<div key={ex.id} className="flex justify-between py-2 border-b border-gray-100 last:border-0"><span className="font-medium text-gray-700">{def?.name}</span><span className="text-sm text-gray-400 font-mono">{vol} {currentUnit}</span></div>) })}</div>
-             <Button onClick={handleExitReport} className="w-full">Back to Home</Button>
-          </div>
+	          <div className="flex flex-col items-center text-center">
+	            <div className="w-20 h-20 rounded-full bg-amber-50 flex items-center justify-center text-amber-500 mb-4 ring-8 ring-amber-50/50">
+	              <Check size={40} strokeWidth={4} />
+	            </div>
+	            <h2 className="text-2xl font-black text-gray-900 mb-1">Workout Complete</h2>
+	            <p className="text-gray-400 text-sm mb-6">Nice work — here’s your score.</p>
+
+	            <div className="w-full flex flex-col gap-4 mb-6">
+	              <div className="bg-gray-50 p-6 rounded-3xl score-pop">
+	                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Duration</p>
+	                <p className="text-5xl font-black text-gray-900 mt-2">
+	                  {animMinutes}
+	                  <span className="text-base font-extrabold text-gray-400 ml-2">min</span>
+	                </p>
+	              </div>
+
+	              <div className="bg-gray-50 p-6 rounded-3xl score-pop">
+	                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Completion</p>
+	                <p className="text-5xl font-black text-gray-900 mt-2">{animCompletion}%</p>
+	              </div>
+
+	              <div className="bg-gray-50 p-6 rounded-3xl score-pop">
+	                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Total Volume</p>
+	                <p className="text-5xl font-black text-gray-900 mt-2">
+	                  {animVolume}
+	                  <span className="text-base font-extrabold text-gray-400 ml-2">{currentUnit}</span>
+	                </p>
+	              </div>
+	            </div>
+
+	            <Button onClick={handleShareReport} className="w-full">Share</Button>
+	            <button onClick={handleExitReport} className="mt-3 text-sm font-semibold text-gray-400 hover:text-gray-600 transition-colors">Back to Home</button>
+	          </div>
       </Modal>
     </div>
   );
@@ -1251,22 +1480,43 @@ const WorkoutEditor: React.FC = () => {
 const BottomNav = () => {
   const location = useLocation();
   const isActive = (path: string) => location.pathname === path;
+  const [popped, setPopped] = useState<string | null>(null);
+  const pop = (path: string) => {
+    setPopped(path);
+    window.setTimeout(() => setPopped(null), 240);
+  };
   
   if (location.pathname.startsWith('/workout/')) return null;
 
   return (
       <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/90 backdrop-blur-md border-t border-gray-100 flex justify-around items-center py-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] z-50">
-        <Link to="/" className={`flex flex-col items-center gap-1 transition-colors ${isActive('/') ? 'text-gray-900' : 'text-gray-300 hover:text-gray-500'}`}>
+        <Link
+          to="/"
+          onClick={() => pop('/')}
+          className={`flex flex-col items-center gap-1 transition-all active:scale-90 ${isActive('/') ? 'text-gray-900' : 'text-gray-300 hover:text-gray-500'} ${popped === '/' ? 'tap-pop' : ''}`}
+        >
             <Home size={24} strokeWidth={isActive('/') ? 3 : 2} />
         </Link>
-        <Link to="/calendar" className={`flex flex-col items-center gap-1 transition-colors ${isActive('/calendar') ? 'text-gray-900' : 'text-gray-300 hover:text-gray-500'}`}>
+        <Link
+          to="/calendar"
+          onClick={() => pop('/calendar')}
+          className={`flex flex-col items-center gap-1 transition-all active:scale-90 ${isActive('/calendar') ? 'text-gray-900' : 'text-gray-300 hover:text-gray-500'} ${popped === '/calendar' ? 'tap-pop' : ''}`}
+        >
             <CalendarIcon size={24} strokeWidth={isActive('/calendar') ? 3 : 2} />
         </Link>
         <div className="w-8"></div> 
-        <Link to="/history" className={`flex flex-col items-center gap-1 transition-colors ${isActive('/history') ? 'text-gray-900' : 'text-gray-300 hover:text-gray-500'}`}>
+        <Link
+          to="/history"
+          onClick={() => pop('/history')}
+          className={`flex flex-col items-center gap-1 transition-all active:scale-90 ${isActive('/history') ? 'text-gray-900' : 'text-gray-300 hover:text-gray-500'} ${popped === '/history' ? 'tap-pop' : ''}`}
+        >
             <History size={24} strokeWidth={isActive('/history') ? 3 : 2} />
         </Link>
-        <Link to="/profile" className={`flex flex-col items-center gap-1 transition-colors ${isActive('/profile') ? 'text-gray-900' : 'text-gray-300 hover:text-gray-500'}`}>
+        <Link
+          to="/profile"
+          onClick={() => pop('/profile')}
+          className={`flex flex-col items-center gap-1 transition-all active:scale-90 ${isActive('/profile') ? 'text-gray-900' : 'text-gray-300 hover:text-gray-500'} ${popped === '/profile' ? 'tap-pop' : ''}`}
+        >
             <User size={24} strokeWidth={isActive('/profile') ? 3 : 2} />
         </Link>
       </div>
